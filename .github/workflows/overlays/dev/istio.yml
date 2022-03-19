@@ -1,0 +1,25 @@
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: chat-service
+spec:
+  hosts:
+    - chat-service
+  http:
+    - route:
+        - destination:
+            host: chat-service
+      retries:
+        attempts: 3
+        perTryTimeout: 2s
+        retryOn: connect-failure,refused-stream,503
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: DestinationRule
+metadata:
+  name: chat-service
+spec:
+  host: chat-service
+  trafficPolicy:
+    loadBalancer:
+      simple: ROUND_ROBIN
