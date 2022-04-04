@@ -1,12 +1,12 @@
 apiVersion: autoscaling/v2beta2
 kind: HorizontalPodAutoscaler
 metadata:
-  name: chat-service-hpa
+  name: channels-service-hpa
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: chat-service
+    name: channels-service
   minReplicas: 2
   maxReplicas: 2
   metrics:

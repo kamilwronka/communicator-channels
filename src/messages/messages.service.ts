@@ -22,13 +22,10 @@ export class MessagesService {
   constructor(private usersService: UsersService) {}
 
   async handleMessage({ userId, serverId, channelId, message }: TMessageData) {
-    // const userData = await this.usersService.getUserData(userId);
-
     try {
       await client
         .emit('message', { userId, serverId, channelId, message })
         .toPromise();
-      // await client.send('message', JSON.stringify(message)).toPromise();
     } catch (error) {
       console.log(error);
       return { msg: 'nie udało sie' };

@@ -1,19 +1,19 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: chat-service
+  name: channels-service
 spec:
   selector:
     matchLabels:
-      app: chat-service
+      app: channels-service
   template:
     metadata:
       labels:
-        app: chat-service
+        app: channels-service
     spec:
-      serviceAccountName: chat-service
+      serviceAccountName: channels-service
       containers:
-        - name: chat-service
+        - name: channels-service
           image: communicator
           resources:
             requests:

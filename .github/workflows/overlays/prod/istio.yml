@@ -1,14 +1,14 @@
 apiVersion: networking.istio.io/v1alpha3
 kind: VirtualService
 metadata:
-  name: chat-service
+  name: channels-service
 spec:
   hosts:
-    - chat-service
+    - channels-service
   http:
     - route:
         - destination:
-            host: chat-service
+            host: channels-service
       retries:
         attempts: 3
         perTryTimeout: 2s
@@ -17,9 +17,9 @@ spec:
 apiVersion: networking.istio.io/v1alpha3
 kind: DestinationRule
 metadata:
-  name: chat-service
+  name: channels-service
 spec:
-  host: chat-service
+  host: channels-service
   trafficPolicy:
     loadBalancer:
       simple: ROUND_ROBIN
