@@ -26,6 +26,7 @@
     "minimist": "^1.2.6"
   },
   "dependencies": {
+    "@communicator/common": "1.0.1",
     "@google-cloud/pubsub": "^2.19.0",
     "@nestjs/common": "^8.0.0",
     "@nestjs/core": "^8.0.0",
@@ -38,7 +39,6 @@
     "rxjs": "^7.2.0"
   },
   "devDependencies": {
-    "@communicator/common": "1.0.1",
     "@nestjs/cli": "^8.2.4",
     "@nestjs/schematics": "^8.0.0",
     "@nestjs/testing": "^8.0.0",
