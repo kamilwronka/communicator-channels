@@ -17,11 +17,11 @@ spec:
           image: communicator
           resources:
             requests:
-              memory: "128Mi"
-              cpu: "100m"
+              memory: "512Mi"
+              cpu: "300m"
             limits:
-              memory: "256Mi"
-              cpu: "100m"
+              memory: "768Mi"
+              cpu: "300m"
           ports:
             - name: container-port
               containerPort: 4000
