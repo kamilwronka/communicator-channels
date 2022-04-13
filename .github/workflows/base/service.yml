@@ -1,10 +1,10 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: channels-service
+  name: channels
   labels:
-    app: channels-service
-    service: channels-service
+    app: channels
+    service: channels
   annotations:
     ingress.kubernetes.io/service-upstream: "true"
 spec:
@@ -14,11 +14,11 @@ spec:
       protocol: TCP
       name: http
   selector:
-    app: channels-service
+    app: channels
 ---
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: channels-service
+  name: channels
   labels:
-    account: channels-service
+    account: channels

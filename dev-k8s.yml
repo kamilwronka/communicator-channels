@@ -3,35 +3,35 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   namespace: communicator-dev
-  name: channels-service
+  name: channels
   labels:
-    account: channels-service
+    account: channels
 
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   namespace: communicator-dev
-  name: channels-service
+  name: channels
   labels:
     purpose: dev
-    app: channels-service
+    app: channels
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: channels-service
+      app: channels
 
   template:
     metadata:
       labels:
-        app: channels-service
+        app: channels
 
     spec:
-      serviceAccountName: channels-service
+      serviceAccountName: channels
       containers:
-        - name: channels-service
-          image: channels-service
+        - name: channels
+          image: channels
           ports:
             - containerPort: 4000
 ---
@@ -39,10 +39,10 @@ apiVersion: v1
 kind: Service
 metadata:
   namespace: communicator-dev
-  name: channels-service
+  name: channels
   labels:
-    app: channels-service
-    service: channels-service
+    app: channels
+    service: channels
   annotations:
     ingress.kubernetes.io/service-upstream: "true"
 spec:
@@ -52,13 +52,13 @@ spec:
       protocol: TCP
       name: http
   selector:
-    app: channels-service
+    app: channels
 
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: channels-service-ingress
+  name: channels-ingress
   namespace: communicator-dev
   annotations:
     konghq.com/plugins: jwt,communicator-dev-cors
@@ -73,7 +73,7 @@ spec:
             pathType: ImplementationSpecific
             backend:
               service:
-                name: channels-service
+                name: channels
                 port:
                   number: 4000
 ---
@@ -81,14 +81,14 @@ apiVersion: networking.istio.io/v1alpha3
 kind: VirtualService
 metadata:
   namespace: communicator-dev
-  name: channels-service
+  name: channels
 spec:
   hosts:
-    - channels-service
+    - channels
   http:
     - route:
         - destination:
-            host: channels-service
+            host: channels
       # retries:
       #   attempts: 3
       #   perTryTimeout: 2s
@@ -98,9 +98,9 @@ apiVersion: networking.istio.io/v1alpha3
 kind: DestinationRule
 metadata:
   namespace: communicator-dev
-  name: channels-service
+  name: channels
 spec:
-  host: channels-service
+  host: channels
   trafficPolicy:
     loadBalancer:
       simple: ROUND_ROBIN
@@ -113,7 +113,7 @@ spec:
 # spec:
 #   selector:
 #     matchLabels:
-#       app: channels-service
+#       app: channels
 #   action: DENY
 #   rules:
 #     - from:
