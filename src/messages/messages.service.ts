@@ -12,7 +12,7 @@ export type TMessageData = {
 
 const client = new GCPubSubClient({
   client: {
-    projectId: 'communicator-dev-329611',
+    projectId: 'vaulted-acolyte-348710',
   },
   topic: 'message',
 });
