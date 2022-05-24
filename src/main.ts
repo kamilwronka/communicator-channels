@@ -4,6 +4,7 @@ import { AppModule } from './app.module';
 import { configService } from './config/config.service';
 
 async function bootstrap() {
+  await configService.setup(['ENV', 'PORT']);
   const port = configService.getPort();
 
   const app = await NestFactory.create(AppModule);

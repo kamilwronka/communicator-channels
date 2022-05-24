@@ -1,41 +1,79 @@
-import { UsersService } from '@communicator/common';
-import { Injectable } from '@nestjs/common';
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model, Types } from 'mongoose';
 import { GCPubSubClient } from 'nestjs-google-pubsub-microservice';
+import { configService } from 'src/config/config.service';
+import { getUserData } from 'src/services/users/users.service';
 import { MessageDto } from './dto/message.dto';
+import { Message, MessageDocument } from './schemas/message.schema';
+import { parseMessageContent } from './utils/parseMessageContent.util';
 
 export type TMessageData = {
   userId: string;
-  serverId: string;
   channelId: string;
   message: MessageDto;
 };
 
-const client = new GCPubSubClient({
-  client: {
-    projectId: 'vaulted-acolyte-348710',
-  },
-  topic: 'message',
-});
+const pubSubConfig = configService.getPubSubConfig();
+
+const client = new GCPubSubClient(pubSubConfig);
 
 @Injectable()
 export class MessagesService {
-  constructor(private usersService: UsersService) {}
+  constructor(
+    @InjectModel(Message.name) private messageModel: Model<MessageDocument>,
+  ) {}
 
-  async handleMessage({ userId, serverId, channelId, message }: TMessageData) {
-    try {
-      await client
-        .emit('message', { userId, serverId, channelId, message })
-        .toPromise();
-    } catch (error) {
-      console.log(error);
-      return { msg: 'nie udało sie' };
+  async getChannelMessages(userId: string, channelId) {
+    const messages = await this.messageModel.find({ channel_id: channelId });
+
+    return messages;
+  }
+
+  async handleMessage({ userId, channelId, message }: TMessageData) {
+    const sender = await getUserData(userId);
+
+    const parsedContent = parseMessageContent(message.content);
+
+    let mentions = [];
+
+    if (parsedContent.mentions.length > 0) {
+      mentions = await Promise.all(
+        parsedContent.mentions.map((mention) => {
+          return getUserData(mention)
+            .then((res) => res)
+            .catch((error) => console.log(error));
+        }),
+      );
     }
 
-    // client
-    //   .send('message', message)
-    //   .subscribe((response) => console.log(response));
-    // console.log(userData);
+    const newMessage: Message = {
+      attachments: [],
+      author: sender,
+      channel_id: channelId,
+      content: message.content,
+      mention_everyone: parsedContent.mentionEveryone,
+      mention_roles: [],
+      mentions,
+      _id: new Types.ObjectId().toString(),
+      nonce: message.nonce,
+    };
 
-    return { userId, serverId, channelId, message };
+    const newMessageInstance = new this.messageModel(newMessage);
+    let dbResponse = {} as Message;
+
+    try {
+      dbResponse = await newMessageInstance.save();
+    } catch (error) {
+      throw new InternalServerErrorException();
+    }
+
+    try {
+      client.emit('message', dbResponse).subscribe();
+    } catch (error) {
+      console.log(error);
+    }
+
+    return dbResponse;
   }
 }
