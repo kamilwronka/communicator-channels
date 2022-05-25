@@ -1,4 +1,8 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { GCPubSubClient } from 'nestjs-google-pubsub-microservice';
@@ -24,10 +28,31 @@ export class MessagesService {
     @InjectModel(Message.name) private messageModel: Model<MessageDocument>,
   ) {}
 
-  async getChannelMessages(userId: string, channelId) {
-    const messages = await this.messageModel.find({ channel_id: channelId });
+  async getChannelMessages(
+    userId: string,
+    channelId,
+    query: { limit: string; before: string },
+  ) {
+    const { limit: limitString, before } = query;
+    const limit = parseInt(limitString, 10);
 
-    return messages;
+    if (limit > 50) {
+      throw new BadRequestException('Maximum limit is 50');
+    }
+
+    const findQuery = {
+      channel_id: channelId,
+      ...(before ? { _id: { $lt: before } } : {}),
+    };
+
+    const messages = await this.messageModel
+      .find(findQuery)
+      .sort({ createdAt: 'desc' })
+      // .skip(before * limit)
+      .limit(limit)
+      .exec();
+
+    return messages.reverse();
   }
 
   async handleMessage({ userId, channelId, message }: TMessageData) {
