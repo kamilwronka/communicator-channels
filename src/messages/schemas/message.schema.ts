@@ -6,7 +6,12 @@ import { User, UserSchema } from './user.schema';
 
 export type MessageDocument = Message & Document;
 
-@Schema({ timestamps: true })
+@Schema({
+  timestamps: {
+    createdAt: 'created_at',
+    updatedAt: 'updated_at',
+  },
+})
 export class Message {
   constructor(partial: Partial<Message>) {
     Object.assign(this, partial);
@@ -44,6 +49,9 @@ export class Message {
 
   @Prop()
   referenced_message?: string;
+
+  created_at?: string;
+  updated_at?: string;
 }
 
 export const MessageSchema = SchemaFactory.createForClass(Message);

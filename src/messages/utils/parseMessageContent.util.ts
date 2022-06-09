@@ -30,6 +30,6 @@ export const parseMessageContent = (content: string) => {
     content,
     mentionEveryone,
     mentionRoles,
-    mentions,
+    mentions: [...new Set(mentions)],
   };
 };

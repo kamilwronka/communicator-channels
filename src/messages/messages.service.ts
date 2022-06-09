@@ -7,6 +7,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { GCPubSubClient } from 'nestjs-google-pubsub-microservice';
 import { configService } from 'src/config/config.service';
+import { updateLastMessageDate } from 'src/services/servers/servers.service';
 import { getUserData } from 'src/services/users/users.service';
 import { MessageDto } from './dto/message.dto';
 import { Message, MessageDocument } from './schemas/message.schema';
@@ -47,7 +48,7 @@ export class MessagesService {
 
     const messages = await this.messageModel
       .find(findQuery)
-      .sort({ createdAt: 'desc' })
+      .sort({ created_at: 'desc' })
       // .skip(before * limit)
       .limit(limit)
       .exec();
@@ -94,6 +95,7 @@ export class MessagesService {
     }
 
     try {
+      updateLastMessageDate(channelId, dbResponse.created_at);
       client.emit('message', dbResponse).subscribe();
     } catch (error) {
       console.log(error);
