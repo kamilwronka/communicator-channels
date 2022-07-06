@@ -34,7 +34,7 @@ RUN npm prune --production
 # RUN /usr/local/bin/node-prune
 
 FROM node:16-alpine
-WORKDIR /usr/src/appß
+WORKDIR /usr/src/app
 
 ENV GOOGLE_APPLICATION_CREDENTIALS=/usr/src/app/credentials.json
 
