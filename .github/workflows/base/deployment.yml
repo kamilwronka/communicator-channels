@@ -11,6 +11,8 @@ spec:
       labels:
         app: channels
     spec:
+      imagePullSecrets:
+        - name: docker-registry
       serviceAccountName: channels
       containers:
         - name: channels
