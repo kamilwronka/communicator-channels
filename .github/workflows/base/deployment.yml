@@ -32,6 +32,11 @@ spec:
               value: "4000"
             - name: ENV
               value: dev
+            - name: CDN_URL
+              valueFrom:
+                secretKeyRef:
+                  name: cloudflare
+                  key: cdn-url
             #mongo
             - name: MONGODB_HOST
               value: mongodb
