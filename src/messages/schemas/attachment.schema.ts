@@ -12,19 +12,7 @@ export class Attachment {
   url: string;
 
   @Prop()
-  content_type: string;
-
-  @Prop()
-  filename: string;
-
-  @Prop()
-  size: number;
-
-  @Prop()
-  height: number;
-
-  @Prop()
-  width: number;
+  mimeType: string;
 }
 
 export const AttachmentSchema = SchemaFactory.createForClass(Attachment);

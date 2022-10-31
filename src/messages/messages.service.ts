@@ -1,32 +1,30 @@
-import {
-  BadRequestException,
-  Injectable,
-  InternalServerErrorException,
-} from '@nestjs/common';
+import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import { BadRequestException, Inject, Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { ClientProxy } from '@nestjs/microservices';
 import { InjectModel } from '@nestjs/mongoose';
+import { lookup } from 'mime-types';
 import { Model, Types } from 'mongoose';
-import { GCPubSubClient } from 'nestjs-google-pubsub-microservice';
-import { configService } from 'src/config/config.service';
-import { updateLastMessageDate } from 'src/services/servers/servers.service';
-import { getUserData } from 'src/services/users/users.service';
+import { ICloudflareConfig, IServicesConfig } from 'src/config/types';
+import { ServersService } from 'src/servers/servers.service';
+import { UsersService } from 'src/users/users.service';
 import { MessageDto } from './dto/message.dto';
+import { MessageAttachmentsDto } from './dto/messageAttachments.dto';
+import { generateFileUploadData } from './helpers/generateFileUploadData.helper';
+import { Attachment } from './schemas/attachment.schema';
 import { Message, MessageDocument } from './schemas/message.schema';
 import { parseMessageContent } from './utils/parseMessageContent.util';
-
-export type TMessageData = {
-  userId: string;
-  channelId: string;
-  message: MessageDto;
-};
-
-const pubSubConfig = configService.getPubSubConfig();
-
-const client = new GCPubSubClient(pubSubConfig);
 
 @Injectable()
 export class MessagesService {
   constructor(
     @InjectModel(Message.name) private messageModel: Model<MessageDocument>,
+    @Inject('GATEWAY') private gatewayClient: ClientProxy,
+    private readonly serversService: ServersService,
+    private readonly usersService: UsersService,
+    private readonly configService: ConfigService,
+    private readonly s3Client: S3Client,
   ) {}
 
   async getChannelMessages(
@@ -56,25 +54,41 @@ export class MessagesService {
     return messages.reverse();
   }
 
-  async handleMessage({ userId, channelId, message }: TMessageData) {
-    const sender = await getUserData(userId);
-
+  async handleMessage(userId: string, channelId: string, message: MessageDto) {
+    const sender = await this.usersService.getUserData(userId);
     const parsedContent = parseMessageContent(message.content);
 
     let mentions = [];
+    const attachments: Attachment[] = [];
 
     if (parsedContent.mentions.length > 0) {
       mentions = await Promise.all(
         parsedContent.mentions.map((mention) => {
-          return getUserData(mention)
+          return this.usersService
+            .getUserData(mention)
             .then((res) => res)
             .catch((error) => console.log(error));
         }),
       );
     }
 
+    if (message.attachments) {
+      const { cdn } = this.configService.get<IServicesConfig>('services');
+
+      message.attachments.forEach((attachment) => {
+        const mimeType = lookup(attachment.key);
+
+        if (mimeType) {
+          attachments.push({
+            url: `${cdn}/${attachment.key}`,
+            mimeType,
+          });
+        }
+      });
+    }
+
     const newMessage: Message = {
-      attachments: [],
+      attachments,
       author: sender,
       channel_id: channelId,
       content: message.content,
@@ -86,21 +100,38 @@ export class MessagesService {
     };
 
     const newMessageInstance = new this.messageModel(newMessage);
-    let dbResponse = {} as Message;
+    const dbResponse = await newMessageInstance.save();
 
-    try {
-      dbResponse = await newMessageInstance.save();
-    } catch (error) {
-      throw new InternalServerErrorException();
-    }
+    this.serversService.updateLastMessageDate(channelId, dbResponse.created_at);
 
-    try {
-      updateLastMessageDate(channelId, dbResponse.created_at);
-      client.emit('message', dbResponse).subscribe();
-    } catch (error) {
-      console.log(error);
-    }
+    this.gatewayClient.emit('message', dbResponse).subscribe();
 
     return dbResponse;
+  }
+
+  async handleAttachments(
+    userId: string,
+    channelId: string,
+    attachments: MessageAttachmentsDto,
+  ) {
+    const { bucketName } =
+      this.configService.get<ICloudflareConfig>('cloudflare');
+
+    const files = attachments.files.map((file) => {
+      const { key, mimeType } = generateFileUploadData(
+        `channels/${channelId}`,
+        file.filename,
+      );
+      return getSignedUrl(
+        this.s3Client,
+        new PutObjectCommand({
+          Bucket: bucketName,
+          Key: key,
+          ContentType: mimeType ? mimeType : '',
+        }),
+      ).then((url) => ({ url, key }));
+    });
+
+    return Promise.all(files);
   }
 }

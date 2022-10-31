@@ -2,9 +2,8 @@ import { Type } from 'class-transformer';
 import {
   ArrayMaxSize,
   ArrayMinSize,
-  IsArray,
   IsNotEmpty,
-  IsOptional,
+  IsNumber,
   IsString,
   ValidateNested,
 } from 'class-validator';
@@ -16,25 +15,18 @@ import {
 export class MessageAttachment {
   @IsNotEmpty()
   @IsString()
-  key: string;
+  filename: string;
+
+  @IsNotEmpty()
+  @IsNumber()
+  fileSize: number;
 }
 
-export class MessageDto {
+export class MessageAttachmentsDto {
   @IsNotEmpty()
-  content: string;
-
-  @IsOptional()
-  @IsArray()
   @ValidateNested()
   @Type(() => MessageAttachment)
   @ArrayMaxSize(MAX_ATTACHMENTS)
   @ArrayMinSize(MIN_ATTACHMENTS)
-  attachments?: MessageAttachment[];
-
-  @IsOptional()
-  message_reference?: string;
-
-  @IsNotEmpty()
-  @IsString()
-  nonce: string;
+  files: MessageAttachment[];
 }

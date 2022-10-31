@@ -37,3 +37,5 @@ lerna-debug.log*
 sa-key.json
 
 .env
+.kpt-pipeline
+coverage
