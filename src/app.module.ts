@@ -8,16 +8,16 @@ import servicesConfig from './config/services.config';
 import cloudflareConfig from './config/cloudflare.config';
 import appConfig from './config/app.config';
 import rabbitmqConfig from './config/rabbitmq.config';
+import livekitConfig from './config/livekit.config';
 
 import { HealthController } from './health/health.controller';
-import { MessagesModule } from './messages/messages.module';
 import { EEnvironment, IMongoConfig } from './config/types';
 import { UsersModule } from './users/users.module';
 import { ServersModule } from './servers/servers.module';
+import { ChannelsModule } from './channels/channels.module';
 
 @Module({
   imports: [
-    MessagesModule,
     MongooseModule.forRootAsync({
       inject: [ConfigService],
       useFactory: async (configService: ConfigService) => {
@@ -39,6 +39,7 @@ import { ServersModule } from './servers/servers.module';
         mongoConfig,
         servicesConfig,
         cloudflareConfig,
+        livekitConfig,
       ],
       cache: true,
       validationSchema: Joi.object({
@@ -60,6 +61,8 @@ import { ServersModule } from './servers/servers.module';
         CLOUDFLARE_ACCESS_KEY_ID: Joi.string(),
         CLOUDFLARE_SECRET_ACCESS_KEY: Joi.string(),
         CLOUDFLARE_R2_BUCKET_NAME: Joi.string(),
+        LIVEKIT_API_KEY: Joi.string(),
+        LIVEKIT_API_SECRET: Joi.string(),
       }),
       validationOptions: {
         allowUnknown: true,
@@ -68,6 +71,7 @@ import { ServersModule } from './servers/servers.module';
     }),
     UsersModule,
     ServersModule,
+    ChannelsModule,
   ],
   controllers: [HealthController],
   providers: [],

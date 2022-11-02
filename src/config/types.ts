@@ -37,3 +37,8 @@ export interface ICloudflareConfig {
   accountId: string;
   bucketName: string;
 }
+
+export interface ILivekitConfig {
+  apiKey: string;
+  secret: string;
+}

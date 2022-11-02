@@ -84,6 +84,10 @@ spec:
                 secretKeyRef:
                   name: cloudflare
                   key: cloudflare-r2-bucket-name
+            - name: LIVEKIT_API_KEY
+              value: changeme
+            - name: LIVEKIT_API_SECRET
+              value: changeme
 
           livenessProbe:
             httpGet:

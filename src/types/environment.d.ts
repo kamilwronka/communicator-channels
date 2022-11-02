@@ -16,6 +16,9 @@ declare global {
       MONGODB_HOST: string;
       MONGODB_ACCESS_PORT: number;
       MONGODB_DATABASE: string;
+
+      LIVEKIT_API_KEY: string;
+      LIVEKIT_API_SECRET: string;
     }
   }
 }
