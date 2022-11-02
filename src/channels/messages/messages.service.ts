@@ -7,8 +7,8 @@ import { InjectModel } from '@nestjs/mongoose';
 import { lookup } from 'mime-types';
 import { Model, Types } from 'mongoose';
 import { ICloudflareConfig, IServicesConfig } from 'src/config/types';
-import { ServersService } from 'src/servers/servers.service';
 import { UsersService } from 'src/users/users.service';
+import { ChannelsService } from '../channels.service';
 import { MessageDto } from './dto/message.dto';
 import { MessageAttachmentsDto } from './dto/messageAttachments.dto';
 import { generateFileUploadData } from './helpers/generateFileUploadData.helper';
@@ -21,10 +21,10 @@ export class MessagesService {
   constructor(
     @InjectModel(Message.name) private messageModel: Model<MessageDocument>,
     @Inject('GATEWAY') private gatewayClient: ClientProxy,
-    private readonly serversService: ServersService,
     private readonly usersService: UsersService,
     private readonly configService: ConfigService,
     private readonly s3Client: S3Client,
+    private readonly channelsService: ChannelsService,
   ) {}
 
   async getChannelMessages(
@@ -102,7 +102,10 @@ export class MessagesService {
     const newMessageInstance = new this.messageModel(newMessage);
     const dbResponse = await newMessageInstance.save();
 
-    this.serversService.updateLastMessageDate(channelId, dbResponse.created_at);
+    this.channelsService.updateLastMessageDate(
+      channelId,
+      dbResponse.created_at,
+    );
 
     this.gatewayClient.emit('message', dbResponse).subscribe();
 

@@ -10,7 +10,7 @@ import { Model } from 'mongoose';
 import { AccessToken } from 'livekit-server-sdk';
 
 import { UsersService } from 'src/users/users.service';
-import { UpdateLastMessageDateDto } from './dto/update-last-message-date.dto';
+// import { UpdateLastMessageDateDto } from './dto/update-last-message-date.dto';
 import { Channel, ChannelDocument } from './schemas/channel.schema';
 import { ILivekitConfig } from 'src/config/types';
 import { EChannelType } from './enums/channel-type.enum';
@@ -153,19 +153,14 @@ export class ChannelsService {
     return { token: accessToken.toJwt() };
   }
 
-  async updateLastMessageDate(
-    channelId: string,
-    { timestamp }: UpdateLastMessageDateDto,
-  ) {
-    const isoDate = new Date(parseInt(timestamp, 10)).toISOString();
-
+  async updateLastMessageDate(channelId: string, date: string) {
     await this.channelModel.updateOne(
       {
         _id: channelId,
-        lastMessageDate: { $lt: isoDate },
+        lastMessageDate: { $lt: date },
       },
       {
-        $set: { lastMessageDate: isoDate },
+        $set: { lastMessageDate: date },
       },
       { new: true },
     );

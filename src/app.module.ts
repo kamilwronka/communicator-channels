@@ -13,7 +13,6 @@ import livekitConfig from './config/livekit.config';
 import { HealthController } from './health/health.controller';
 import { EEnvironment, IMongoConfig } from './config/types';
 import { UsersModule } from './users/users.module';
-import { ServersModule } from './servers/servers.module';
 import { ChannelsModule } from './channels/channels.module';
 
 @Module({
@@ -70,7 +69,6 @@ import { ChannelsModule } from './channels/channels.module';
       },
     }),
     UsersModule,
-    ServersModule,
     ChannelsModule,
   ],
   controllers: [HealthController],

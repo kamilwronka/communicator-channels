@@ -4,7 +4,6 @@ import { ConfigService } from '@nestjs/config';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ICloudflareConfig, IRabbitMqConfig } from 'src/config/types';
-import { ServersModule } from 'src/servers/servers.module';
 import { UsersModule } from 'src/users/users.module';
 import { ChannelsController } from './channels.controller';
 import { ChannelsService } from './channels.service';
@@ -19,7 +18,6 @@ import { Channel, ChannelSchema } from './schemas/channel.schema';
       { name: Channel.name, schema: ChannelSchema },
       { name: Message.name, schema: MessageSchema },
     ]),
-    ServersModule,
     UsersModule,
     ClientsModule.registerAsync([
       {

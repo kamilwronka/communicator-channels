@@ -3,7 +3,7 @@ import {
   Controller,
   Get,
   Param,
-  Patch,
+  //   Patch,
   Post,
   Query,
 } from '@nestjs/common';
@@ -20,10 +20,10 @@ import {
   GetServerChannelRTCTokenQueryDto,
   GetUserChannelRTCTokenParamsDto,
 } from './dto/get-rtc-token.dto';
-import {
-  UpdateLastMessageDateDto,
-  UpdateLastMessageDateParamsDto,
-} from './dto/update-last-message-date.dto';
+// import {
+//   UpdateLastMessageDateDto,
+//   UpdateLastMessageDateParamsDto,
+// } from './dto/update-last-message-date.dto';
 
 @Controller('')
 export class ChannelsController {
@@ -38,13 +38,13 @@ export class ChannelsController {
     return this.channelsService.createUserChannel(createChannelData);
   }
 
-  @Patch(':channelId')
-  async updateLastMessageDate(
-    @Param() params: UpdateLastMessageDateParamsDto,
-    @Body() data: UpdateLastMessageDateDto,
-  ) {
-    return this.channelsService.updateLastMessageDate(params.channelId, data);
-  }
+  //   @Patch(':channelId')
+  //   async updateLastMessageDate(
+  //     @Param() params: UpdateLastMessageDateParamsDto,
+  //     @Body() data: UpdateLastMessageDateDto,
+  //   ) {
+  //     return this.channelsService.updateLastMessageDate(params.channelId, data);
+  //   }
 
   @Get(':channelId/rtc-token')
   async getUserChannelRTCToken(
