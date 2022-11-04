@@ -78,7 +78,7 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: aws
-                  key: aws-r2-bucket-name
+                  key: aws-s3-bucket-name
             - name: LIVEKIT_API_KEY
               value: changeme
             - name: LIVEKIT_API_SECRET
