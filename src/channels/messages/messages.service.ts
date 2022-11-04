@@ -6,7 +6,7 @@ import { ClientProxy } from '@nestjs/microservices';
 import { InjectModel } from '@nestjs/mongoose';
 import { lookup } from 'mime-types';
 import { Model, Types } from 'mongoose';
-import { ICloudflareConfig, IServicesConfig } from 'src/config/types';
+import { IAWSConfig, IServicesConfig } from 'src/config/types';
 import { UsersService } from 'src/users/users.service';
 import { ChannelsService } from '../channels.service';
 import { MessageDto } from './dto/message.dto';
@@ -117,8 +117,7 @@ export class MessagesService {
     channelId: string,
     attachments: MessageAttachmentsDto,
   ) {
-    const { bucketName } =
-      this.configService.get<ICloudflareConfig>('cloudflare');
+    const { bucketName } = this.configService.get<IAWSConfig>('aws');
 
     const files = attachments.files.map((file) => {
       const { key, mimeType } = generateFileUploadData(

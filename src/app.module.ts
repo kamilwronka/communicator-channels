@@ -5,7 +5,6 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 
 import mongoConfig from './config/mongo.config';
 import servicesConfig from './config/services.config';
-import cloudflareConfig from './config/cloudflare.config';
 import appConfig from './config/app.config';
 import rabbitmqConfig from './config/rabbitmq.config';
 import livekitConfig from './config/livekit.config';
@@ -14,6 +13,7 @@ import { HealthController } from './health/health.controller';
 import { EEnvironment, IMongoConfig } from './config/types';
 import { UsersModule } from './users/users.module';
 import { ChannelsModule } from './channels/channels.module';
+import awsConfig from './config/aws.config';
 
 @Module({
   imports: [
@@ -37,7 +37,7 @@ import { ChannelsModule } from './channels/channels.module';
         rabbitmqConfig,
         mongoConfig,
         servicesConfig,
-        cloudflareConfig,
+        awsConfig,
         livekitConfig,
       ],
       cache: true,
@@ -56,10 +56,9 @@ import { ChannelsModule } from './channels/channels.module';
         RABBITMQ_PASSWORD: Joi.string(),
         RABBITMQ_HOST: Joi.string(),
         RABBITMQ_ACCESS_PORT: Joi.string(),
-        CLOUDFLARE_ACCOUNT_ID: Joi.string(),
-        CLOUDFLARE_ACCESS_KEY_ID: Joi.string(),
-        CLOUDFLARE_SECRET_ACCESS_KEY: Joi.string(),
-        CLOUDFLARE_R2_BUCKET_NAME: Joi.string(),
+        AWS_ACCESS_KEY_ID: Joi.string(),
+        AWS_SECRET_ACCESS_KEY: Joi.string(),
+        AWS_S3_BUCKET_NAME: Joi.string(),
         LIVEKIT_API_KEY: Joi.string(),
         LIVEKIT_API_SECRET: Joi.string(),
       }),

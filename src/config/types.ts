@@ -31,10 +31,9 @@ export interface IServicesConfig {
   cdn: string;
 }
 
-export interface ICloudflareConfig {
-  apiKey: string;
+export interface IAWSConfig {
+  accessKeyId: string;
   secret: string;
-  accountId: string;
   bucketName: string;
 }
 
