@@ -6,10 +6,13 @@ import {
   IsNotEmpty,
   IsOptional,
   IsString,
+  MaxLength,
+  ValidateIf,
   ValidateNested,
 } from 'class-validator';
 import {
   MAX_ATTACHMENTS,
+  MAX_CONTENT_LENGTH,
   MIN_ATTACHMENTS,
 } from '../constants/messages.constants';
 
@@ -20,7 +23,10 @@ export class MessageAttachment {
 }
 
 export class MessageDto {
+  @ValidateIf((o: MessageDto) => !o.attachments)
   @IsNotEmpty()
+  @IsString()
+  @MaxLength(MAX_CONTENT_LENGTH)
   content: string;
 
   @IsOptional()
