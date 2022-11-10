@@ -35,8 +35,8 @@ spec:
             - name: CDN_URL
               valueFrom:
                 secretKeyRef:
-                  name: aws
-                  key: cdn-url
+                  name: cdn
+                  key: cdnUrl
             #mongo
             - name: MONGODB_HOST
               value: mongodb
