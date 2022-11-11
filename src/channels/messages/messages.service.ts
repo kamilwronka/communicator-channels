@@ -80,7 +80,7 @@ export class MessagesService {
 
         if (mimeType) {
           attachments.push({
-            url: `${cdn}/${attachment.key}`,
+            url: `https://${cdn}/${attachment.key}`,
             mimeType,
           });
         }
