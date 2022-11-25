@@ -5,7 +5,7 @@ export type MentionDocument = Mention & Document;
 @Schema({ _id: false })
 export class Mention {
   @Prop()
-  user_id: string;
+  id: string;
 
   @Prop()
   username: string;
