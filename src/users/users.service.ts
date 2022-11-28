@@ -11,7 +11,7 @@ export class UsersService {
 
   async getUserData(userId: string): Promise<any> {
     const { data } = await firstValueFrom(
-      this.httpService.get(`/${userId}`).pipe(
+      this.httpService.get(`/internal/${userId}`).pipe(
         catchError((error: AxiosError) => {
           this.logger.error(error.message);
           throw new BadGatewayException(error.message);
