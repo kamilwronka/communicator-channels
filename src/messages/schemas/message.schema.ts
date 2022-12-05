@@ -57,10 +57,7 @@ export class Message {
   @Prop()
   referenced_message?: string;
 
-  @Exclude()
   createdAt: string;
-
-  @Exclude()
   updatedAt: string;
 
   @Exclude()
