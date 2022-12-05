@@ -1,7 +1,7 @@
 import { registerAs } from '@nestjs/config';
-import { IMongoConfig } from './types';
+import { MongoConfig } from './types';
 
-export default registerAs('mongodb', (): IMongoConfig => {
+export default registerAs('mongodb', (): MongoConfig => {
   const {
     MONGODB_HOST,
     MONGODB_PASSWORD,

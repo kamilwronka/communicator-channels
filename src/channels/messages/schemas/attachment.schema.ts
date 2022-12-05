@@ -5,7 +5,7 @@ import { Document } from 'mongoose';
 export type AttachmentDocument = Attachment & Document;
 @Schema()
 export class Attachment {
-  @Transform(({ value }) => value.toString(), { toPlainOnly: true })
+  @Transform((value) => value.obj._id.toString())
   _id?: string;
 
   @Prop()

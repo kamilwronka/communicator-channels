@@ -1,23 +1,20 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
-import { Transform, Type } from 'class-transformer';
+import { Exclude, Transform, Type } from 'class-transformer';
 import { Attachment, AttachmentSchema } from './attachment.schema';
-import { User, UserSchema } from './user.schema';
+import { User } from 'src/users/schemas/user.schema';
 
 export type MessageDocument = Message & Document;
 
 @Schema({
-  timestamps: {
-    createdAt: 'created_at',
-    updatedAt: 'updated_at',
-  },
+  timestamps: true,
 })
 export class Message {
   constructor(partial: Partial<Message>) {
     Object.assign(this, partial);
   }
 
-  @Transform(({ value }) => value.toString(), { toPlainOnly: true })
+  @Transform((value) => value.obj._id.toString())
   _id?: string;
 
   @Type(() => Attachment)
@@ -25,24 +22,24 @@ export class Message {
   attachments: Attachment[];
 
   @Type(() => User)
-  @Prop({ type: UserSchema })
-  author: User;
+  @Prop({ type: String, ref: User.name })
+  author: User | string;
 
   @Prop()
-  channel_id: string;
+  channelId: string;
 
   @Prop()
   content: string;
 
   @Prop()
-  mention_everyone: boolean;
+  mentionEveryone: boolean;
 
   @Prop({ type: [], default: [] })
-  mention_roles: string[];
+  mentionRoles: string[];
 
   @Type(() => User)
-  @Prop({ type: [UserSchema], default: [] })
-  mentions: User[];
+  @Prop([{ type: String, ref: User.name }])
+  mentions: User[] | string[];
 
   @Prop({ required: true })
   nonce: string;
@@ -50,8 +47,14 @@ export class Message {
   @Prop()
   referenced_message?: string;
 
-  created_at?: string;
-  updated_at?: string;
+  @Exclude()
+  createdAt: string;
+
+  @Exclude()
+  updatedAt: string;
+
+  @Exclude()
+  __v: number;
 }
 
 export const MessageSchema = SchemaFactory.createForClass(Message);

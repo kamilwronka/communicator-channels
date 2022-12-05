@@ -3,7 +3,7 @@ import { Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { MongooseModule } from '@nestjs/mongoose';
-import { IAWSConfig, IRabbitMqConfig } from 'src/config/types';
+import { AWSConfig, RabbitMqConfig } from 'src/config/types';
 import { UsersModule } from 'src/users/users.module';
 import { ChannelsController } from './channels.controller';
 import { ChannelsService } from './channels.service';
@@ -25,7 +25,7 @@ import { Channel, ChannelSchema } from './schemas/channel.schema';
         inject: [ConfigService],
         useFactory: async (configService: ConfigService) => {
           const { user, password, host, port, queue } =
-            configService.get<IRabbitMqConfig>('rabbitmq');
+            configService.get<RabbitMqConfig>('rabbitmq');
 
           return {
             transport: Transport.RMQ,
@@ -49,7 +49,7 @@ import { Channel, ChannelSchema } from './schemas/channel.schema';
       provide: S3Client,
       inject: [ConfigService],
       useFactory: async (configService: ConfigService) => {
-        const { accessKeyId, secret } = configService.get<IAWSConfig>('aws');
+        const { accessKeyId, secret } = configService.get<AWSConfig>('aws');
 
         return new S3Client({
           region: 'eu-central-1',

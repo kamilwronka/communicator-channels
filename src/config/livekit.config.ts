@@ -1,7 +1,7 @@
 import { registerAs } from '@nestjs/config';
-import { ILivekitConfig } from './types';
+import { LivekitConfig } from './types';
 
-export default registerAs('livekit', (): ILivekitConfig => {
+export default registerAs('livekit', (): LivekitConfig => {
   const { LIVEKIT_API_KEY, LIVEKIT_API_SECRET } = process.env;
 
   return {
