@@ -4,7 +4,7 @@ import { HydratedDocument } from 'mongoose';
 
 export type UserDocument = HydratedDocument<User>;
 
-@Schema({ timestamps: true, toJSON: { virtuals: true } })
+@Schema({ timestamps: true, toJSON: { virtuals: true }, id: false })
 export class User {
   @Exclude()
   _id: string;
