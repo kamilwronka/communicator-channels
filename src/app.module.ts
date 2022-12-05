@@ -10,18 +10,44 @@ import rabbitmqConfig from './config/rabbitmq.config';
 import livekitConfig from './config/livekit.config';
 
 import { HealthController } from './health/health.controller';
-import { EEnvironment, IMongoConfig } from './config/types';
+import { MongoConfig, RabbitMqConfig } from './config/types';
 import { UsersModule } from './users/users.module';
 import { ChannelsModule } from './channels/channels.module';
 import awsConfig from './config/aws.config';
+import { RuntimeEnvironment } from './types/common';
+import { RabbitMQModule } from '@golevelup/nestjs-rabbitmq';
 
 @Module({
   imports: [
+    RabbitMQModule.forRootAsync(RabbitMQModule, {
+      inject: [ConfigService],
+      useFactory: async (configService: ConfigService) => {
+        const { port, host, password, user } =
+          configService.get<RabbitMqConfig>('rabbitmq');
+
+        return {
+          exchanges: [
+            {
+              name: 'default_exchange',
+              type: 'topic',
+            },
+          ],
+          uri: `amqp://${user}:${password}@${host}:${port}`,
+          channels: {
+            default: {
+              prefetchCount: 1,
+              default: true,
+            },
+          },
+          enableControllerDiscovery: true,
+        };
+      },
+    }),
     MongooseModule.forRootAsync({
       inject: [ConfigService],
       useFactory: async (configService: ConfigService) => {
         const { database, host, port, password, user } =
-          configService.get<IMongoConfig>('mongodb');
+          configService.get<MongoConfig>('mongodb');
 
         return {
           uri: `mongodb://${user}:${password}@${host}:${port}`,
@@ -43,8 +69,12 @@ import awsConfig from './config/aws.config';
       cache: true,
       validationSchema: Joi.object({
         ENV: Joi.string()
-          .valid(EEnvironment.LOCAL, EEnvironment.DEV, EEnvironment.PROD)
-          .default(EEnvironment.LOCAL),
+          .valid(
+            RuntimeEnvironment.LOCAL,
+            RuntimeEnvironment.DEV,
+            RuntimeEnvironment.PROD,
+          )
+          .default(RuntimeEnvironment.LOCAL),
         PORT: Joi.number(),
         CDN_URL: Joi.string(),
         MONGODB_PASSWORD: Joi.string(),

@@ -5,8 +5,8 @@ import { ConfigService } from '@nestjs/config';
 import { ClientProxy } from '@nestjs/microservices';
 import { InjectModel } from '@nestjs/mongoose';
 import { lookup } from 'mime-types';
-import { Model, Types } from 'mongoose';
-import { IAWSConfig, IServicesConfig } from 'src/config/types';
+import { Model } from 'mongoose';
+import { AWSConfig, ServicesConfig } from 'src/config/types';
 import { UsersService } from 'src/users/users.service';
 import { ChannelsService } from '../channels.service';
 import { MessageDto } from './dto/message.dto';
@@ -40,42 +40,29 @@ export class MessagesService {
     }
 
     const findQuery = {
-      channel_id: channelId,
+      channelId,
       ...(before ? { _id: { $lt: before } } : {}),
     };
 
     const messages = await this.messageModel
       .find(findQuery)
-      .sort({ created_at: 'desc' })
-      // .skip(before * limit)
+      .sort({ createdAt: 'desc' })
       .limit(limit)
+      .populate(['mentions', 'author'])
       .exec();
 
     return messages.reverse();
   }
 
-  async handleMessage(userId: string, channelId: string, message: MessageDto) {
-    const sender = await this.usersService.getUserData(userId);
-    const parsedContent = parseMessageContent(message.content);
+  async handleMessage(userId: string, channelId: string, data: MessageDto) {
+    const { mentionEveryone, mentions } = parseMessageContent(data.content);
 
-    let mentions = [];
     const attachments: Attachment[] = [];
 
-    if (parsedContent.mentions.length > 0) {
-      mentions = await Promise.all(
-        parsedContent.mentions.map((mention) => {
-          return this.usersService
-            .getUserData(mention)
-            .then((res) => res)
-            .catch((error) => console.log(error));
-        }),
-      );
-    }
+    if (data.attachments) {
+      const { cdn } = this.configService.get<ServicesConfig>('services');
 
-    if (message.attachments) {
-      const { cdn } = this.configService.get<IServicesConfig>('services');
-
-      message.attachments.forEach((attachment) => {
+      data.attachments.forEach((attachment) => {
         const mimeType = lookup(attachment.key);
 
         if (mimeType) {
@@ -87,29 +74,25 @@ export class MessagesService {
       });
     }
 
-    const newMessage: Message = {
+    const messageData: Partial<Message> = {
       attachments,
-      author: sender,
-      channel_id: channelId,
-      content: message.content,
-      mention_everyone: parsedContent.mentionEveryone,
-      mention_roles: [],
+      author: userId,
+      channelId,
+      content: data.content,
+      mentionEveryone,
+      mentionRoles: [],
       mentions,
-      _id: new Types.ObjectId().toString(),
-      nonce: message.nonce,
+      nonce: data.nonce,
     };
 
-    const newMessageInstance = new this.messageModel(newMessage);
-    const dbResponse = await newMessageInstance.save();
+    const message = await new this.messageModel(messageData).save();
+    const response = await message.populate(['author', 'mentions']);
 
-    this.channelsService.updateLastMessageDate(
-      channelId,
-      dbResponse.created_at,
-    );
+    this.channelsService.updateLastMessageDate(channelId, response.createdAt);
 
-    this.gatewayClient.emit('message', dbResponse).subscribe();
+    this.gatewayClient.emit('message', response).subscribe();
 
-    return dbResponse;
+    return response;
   }
 
   async handleAttachments(
@@ -117,7 +100,7 @@ export class MessagesService {
     channelId: string,
     attachments: MessageAttachmentsDto,
   ) {
-    const { bucketName } = this.configService.get<IAWSConfig>('aws');
+    const { bucketName } = this.configService.get<AWSConfig>('aws');
 
     const files = attachments.files.map((file) => {
       const { key, mimeType } = generateFileUploadData(

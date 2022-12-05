@@ -5,19 +5,23 @@ import {
   Param,
   Post,
   Query,
+  UseInterceptors,
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
 import { UserId } from 'src/decorators/userId.decorator';
+import { CustomSerializerInterceptor } from 'src/interceptors/custom-serializer.interceptor';
 
 import { MessageDto } from './dto/message.dto';
 import { MessageAttachmentsDto } from './dto/messageAttachments.dto';
 import { MessagesService } from './messages.service';
+import { Message } from './schemas/message.schema';
 
 @Controller('')
 export class MessagesController {
   constructor(private messagesService: MessagesService) {}
 
+  @UseInterceptors(CustomSerializerInterceptor(Message))
   @Get(':channelId/messages')
   async getChannelMessages(
     @UserId() userId: string,
@@ -27,6 +31,7 @@ export class MessagesController {
     return this.messagesService.getChannelMessages(userId, channelId, query);
   }
 
+  @UseInterceptors(CustomSerializerInterceptor(Message))
   @Post(':channelId/messages')
   async handleMessage(
     @Body() message: MessageDto,

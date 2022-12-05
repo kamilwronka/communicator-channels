@@ -1,7 +1,7 @@
 import { registerAs } from '@nestjs/config';
-import { IRabbitMqConfig } from './types';
+import { RabbitMqConfig } from './types';
 
-export default registerAs('rabbitmq', (): IRabbitMqConfig => {
+export default registerAs('rabbitmq', (): RabbitMqConfig => {
   const {
     RABBITMQ_USER,
     RABBITMQ_PASSWORD,

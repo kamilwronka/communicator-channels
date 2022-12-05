@@ -1,10 +1,4 @@
-export enum EEnvironment {
-  LOCAL = 'local',
-  DEV = 'dev',
-  PROD = 'prod',
-}
-
-export interface IRabbitMqConfig {
+export interface RabbitMqConfig {
   host: string;
   port: string;
   password: string;
@@ -12,12 +6,12 @@ export interface IRabbitMqConfig {
   queue: string;
 }
 
-export interface IAppConfig {
+export interface AppConfig {
   env: string;
   port: number;
 }
 
-export interface IMongoConfig {
+export interface MongoConfig {
   port: number;
   host: string;
   user: string;
@@ -25,19 +19,19 @@ export interface IMongoConfig {
   database: string;
 }
 
-export interface IServicesConfig {
+export interface ServicesConfig {
   servers: string;
   users: string;
   cdn: string;
 }
 
-export interface IAWSConfig {
+export interface AWSConfig {
   accessKeyId: string;
   secret: string;
   bucketName: string;
 }
 
-export interface ILivekitConfig {
+export interface LivekitConfig {
   apiKey: string;
   secret: string;
 }

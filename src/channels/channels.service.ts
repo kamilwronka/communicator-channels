@@ -12,7 +12,7 @@ import { AccessToken } from 'livekit-server-sdk';
 import { UsersService } from 'src/users/users.service';
 // import { UpdateLastMessageDateDto } from './dto/update-last-message-date.dto';
 import { Channel, ChannelDocument } from './schemas/channel.schema';
-import { ILivekitConfig } from 'src/config/types';
+import { LivekitConfig } from 'src/config/types';
 import { EChannelType } from './enums/channel-type.enum';
 import {
   CreateServerChannelDto,
@@ -120,10 +120,9 @@ export class ChannelsService {
       throw new ForbiddenException();
     }
 
-    const user = await this.usersService.getUserData(userId);
+    const user = await this.usersService.getUserById(userId);
 
-    const { apiKey, secret } =
-      this.configService.get<ILivekitConfig>('livekit');
+    const { apiKey, secret } = this.configService.get<LivekitConfig>('livekit');
 
     const accessToken = new AccessToken(apiKey, secret, {
       identity: user.username,
@@ -140,10 +139,9 @@ export class ChannelsService {
       throw new BadRequestException('invalid channel type');
     }
 
-    const user = await this.usersService.getUserData(userId);
+    const user = await this.usersService.getUserById(userId);
 
-    const { apiKey, secret } =
-      this.configService.get<ILivekitConfig>('livekit');
+    const { apiKey, secret } = this.configService.get<LivekitConfig>('livekit');
 
     const accessToken = new AccessToken(apiKey, secret, {
       identity: user.username,
