@@ -10,39 +10,15 @@ import rabbitmqConfig from './config/rabbitmq.config';
 import livekitConfig from './config/livekit.config';
 
 import { HealthController } from './health/health.controller';
-import { MongoConfig, RabbitMqConfig } from './config/types';
+import { MongoConfig } from './config/types';
 import { UsersModule } from './users/users.module';
 import { ChannelsModule } from './channels/channels.module';
 import awsConfig from './config/aws.config';
 import { RuntimeEnvironment } from './types/common';
-import { RabbitMQModule } from '@golevelup/nestjs-rabbitmq';
+import { MessagesModule } from './messages/messages.module';
 
 @Module({
   imports: [
-    RabbitMQModule.forRootAsync(RabbitMQModule, {
-      inject: [ConfigService],
-      useFactory: async (configService: ConfigService) => {
-        const { port, host, password, user } =
-          configService.get<RabbitMqConfig>('rabbitmq');
-
-        return {
-          exchanges: [
-            {
-              name: 'default_exchange',
-              type: 'topic',
-            },
-          ],
-          uri: `amqp://${user}:${password}@${host}:${port}`,
-          channels: {
-            default: {
-              prefetchCount: 1,
-              default: true,
-            },
-          },
-          enableControllerDiscovery: true,
-        };
-      },
-    }),
     MongooseModule.forRootAsync({
       inject: [ConfigService],
       useFactory: async (configService: ConfigService) => {
@@ -99,6 +75,7 @@ import { RabbitMQModule } from '@golevelup/nestjs-rabbitmq';
     }),
     UsersModule,
     ChannelsModule,
+    MessagesModule,
   ],
   controllers: [HealthController],
   providers: [],

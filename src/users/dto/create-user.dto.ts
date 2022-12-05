@@ -9,9 +9,9 @@ export class CreateUserDto {
   })
   id: string;
 
-  @IsNotEmpty()
+  @IsOptional()
   @IsString()
-  username: string;
+  username?: string;
 
   @IsOptional()
   @IsString()

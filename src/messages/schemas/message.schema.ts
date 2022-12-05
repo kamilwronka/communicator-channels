@@ -1,6 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
-import { Exclude, Transform, Type } from 'class-transformer';
+import { Exclude, Type } from 'class-transformer';
 import { Attachment, AttachmentSchema } from './attachment.schema';
 import { User } from 'src/users/schemas/user.schema';
 
@@ -8,22 +8,28 @@ export type MessageDocument = Message & Document;
 
 @Schema({
   timestamps: true,
+  toJSON: { virtuals: true },
 })
 export class Message {
   constructor(partial: Partial<Message>) {
     Object.assign(this, partial);
   }
 
-  @Transform((value) => value.obj._id.toString())
+  @Exclude()
   _id?: string;
 
   @Type(() => Attachment)
   @Prop({ type: [AttachmentSchema], default: [] })
   attachments: Attachment[];
 
+  @Exclude()
+  @Prop({
+    type: String,
+  })
+  authorId: string;
+
   @Type(() => User)
-  @Prop({ type: String, ref: User.name })
-  author: User | string;
+  author: User;
 
   @Prop()
   channelId: string;
@@ -37,9 +43,13 @@ export class Message {
   @Prop({ type: [], default: [] })
   mentionRoles: string[];
 
+  @Exclude()
   @Type(() => User)
-  @Prop([{ type: String, ref: User.name }])
-  mentions: User[] | string[];
+  @Prop([{ type: String }])
+  mentionIds: string[];
+
+  @Type(() => User)
+  mentions: User[];
 
   @Prop({ required: true })
   nonce: string;
@@ -58,3 +68,16 @@ export class Message {
 }
 
 export const MessageSchema = SchemaFactory.createForClass(Message);
+
+MessageSchema.virtual('author', {
+  ref: User.name,
+  localField: 'authorId',
+  foreignField: 'userId',
+  justOne: true,
+});
+
+MessageSchema.virtual('mentions', {
+  ref: User.name,
+  localField: 'mentionIds',
+  foreignField: 'userId',
+});

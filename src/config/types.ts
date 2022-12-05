@@ -3,7 +3,6 @@ export interface RabbitMqConfig {
   port: string;
   password: string;
   user: string;
-  queue: string;
 }
 
 export interface AppConfig {

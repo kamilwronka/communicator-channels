@@ -1,12 +1,4 @@
-import {
-  Body,
-  Controller,
-  Get,
-  Param,
-  //   Patch,
-  Post,
-  Query,
-} from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
 import { UserId } from 'src/decorators/userId.decorator';
 import { ChannelsService } from './channels.service';
 import {
@@ -20,10 +12,6 @@ import {
   GetServerChannelRTCTokenQueryDto,
   GetUserChannelRTCTokenParamsDto,
 } from './dto/get-rtc-token.dto';
-// import {
-//   UpdateLastMessageDateDto,
-//   UpdateLastMessageDateParamsDto,
-// } from './dto/update-last-message-date.dto';
 
 @Controller('')
 export class ChannelsController {

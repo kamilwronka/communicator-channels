@@ -1,5 +1,4 @@
 export const parseMessageContent = (content: string) => {
-  //   const match = /(?<=<).*?(?=>)/gs.exec(content);
   const match = content.match(
     /(?<=<@)(here|([A-Za-z0-9_-]{21})|(&[a-f\d]{24}))(?=>)/gis,
   );

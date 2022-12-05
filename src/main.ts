@@ -12,9 +12,6 @@ async function bootstrap() {
 
   app.useGlobalPipes(new ValidationPipe({ whitelist: true }));
 
-  Logger.log(`Connecting microservices...`, 'App');
-  await app.startAllMicroservices();
-
   Logger.log(`Starting application on port ${port}...`, 'App');
   await app.listen(port);
 }

@@ -15,15 +15,10 @@ import {
   MAX_CONTENT_LENGTH,
   MIN_ATTACHMENTS,
 } from '../constants/messages.constants';
+import { MessageAttachment } from './send-message.dto';
 
-export class MessageAttachment {
-  @IsNotEmpty()
-  @IsString()
-  key: string;
-}
-
-export class MessageDto {
-  @ValidateIf((o: MessageDto) => !o.attachments)
+export class UpdateMessageDto {
+  @ValidateIf((o: UpdateMessageDto) => !o.attachments)
   @IsNotEmpty()
   @IsString()
   @MaxLength(MAX_CONTENT_LENGTH)
@@ -39,8 +34,4 @@ export class MessageDto {
 
   @IsOptional()
   message_reference?: string;
-
-  @IsNotEmpty()
-  @IsString()
-  nonce: string;
 }
