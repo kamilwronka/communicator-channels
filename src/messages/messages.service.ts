@@ -15,12 +15,19 @@ import { CreateAttachmentsDto } from './dto/create-attachments.dto';
 import { ManageMessageParamsDto } from './dto/manage-message-params.dto';
 import { SendMessageDto } from './dto/send-message.dto';
 import { UpdateMessageDto } from './dto/update-message.dto';
-import { GatewayEvent } from './enums/gateway-event.enum';
 import { createMessageAttachments } from './helpers/createMessageAttachments.helper';
 import { generateFileUploadData } from './helpers/generateFileUploadData.helper';
 import { parseMessageContent } from './helpers/parseMessageContent.helper';
 import { Attachment } from './schemas/attachment.schema';
 import { Message, MessageDocument } from './schemas/message.schema';
+
+enum RoutingKey {
+  MESSAGE_SEND = 'message.send',
+  MESSAGE_UPDATE = 'message.update',
+  MESSAGE_DELETE = 'message.delete',
+  MESSAGE_REACTION_ADD = 'message.reaction.add',
+  MESSAGE_REACTION_DELETE = 'message.reaction.delete',
+}
 
 @Injectable()
 export class MessagesService {
@@ -89,7 +96,7 @@ export class MessagesService {
 
     this.channelsService.updateLastMessageDate(channelId, response.createdAt);
 
-    this.amqpConnection.publish('default', GatewayEvent.MESSAGE_SEND, response);
+    this.amqpConnection.publish('default', RoutingKey.MESSAGE_SEND, response);
 
     return response;
   }
@@ -126,11 +133,7 @@ export class MessagesService {
     const updatedMessage = await message.save();
     const response = await updatedMessage.populate(['author', 'mentions']);
 
-    this.amqpConnection.publish(
-      'default',
-      GatewayEvent.MESSAGE_UPDATE,
-      response,
-    );
+    this.amqpConnection.publish('default', RoutingKey.MESSAGE_UPDATE, response);
 
     return response;
   }
@@ -142,7 +145,7 @@ export class MessagesService {
       throw new NotFoundException();
     }
 
-    this.amqpConnection.publish('default', GatewayEvent.MESSAGE_DELETE, {
+    this.amqpConnection.publish('default', RoutingKey.MESSAGE_DELETE, {
       id: message._id,
     });
 
