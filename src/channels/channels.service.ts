@@ -10,7 +10,6 @@ import { Model } from 'mongoose';
 import { AccessToken } from 'livekit-server-sdk';
 
 import { UsersService } from 'src/users/users.service';
-// import { UpdateLastMessageDateDto } from './dto/update-last-message-date.dto';
 import { Channel, ChannelDocument } from './schemas/channel.schema';
 import { LivekitConfig } from 'src/config/types';
 import { EChannelType } from './enums/channel-type.enum';
@@ -18,6 +17,17 @@ import {
   CreateServerChannelDto,
   CreateUserChannelDto,
 } from './dto/create-channel.dto';
+import {
+  GetUserChannelsDto,
+  GetServerChannelsDto,
+} from './dto/get-channels.dto';
+import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
+
+enum RoutingKey {
+  CREATE = 'channel.create',
+  UPDATE = 'channel.update',
+  DELETE = 'channel.delete',
+}
 
 @Injectable()
 export class ChannelsService {
@@ -25,6 +35,7 @@ export class ChannelsService {
     @InjectModel(Channel.name) private channelModel: Model<ChannelDocument>,
     private readonly configService: ConfigService,
     private readonly usersService: UsersService,
+    private readonly amqpConnection: AmqpConnection,
   ) {}
 
   async getChannelById(channelId: string): Promise<ChannelDocument> {
@@ -37,30 +48,29 @@ export class ChannelsService {
     return channel;
   }
 
-  async getUserChannels(userId: string) {
+  async getUserChannels({ userId }: GetUserChannelsDto) {
     const channels = await this.channelModel
       .find({
-        'users.userId': userId,
+        userIds: userId,
       })
-      .sort({ lastMessageDate: -1 });
+      .sort({ lastMessageDate: -1 })
+      .populate('users');
 
     return channels;
   }
 
-  async getServerChannels(serverId: string) {
-    const channels = await this.channelModel.find({ serverId: serverId });
+  async getServerChannels({ serverId }: GetServerChannelsDto) {
+    const channels = await this.channelModel.find({ serverId });
 
     return channels;
   }
 
   async createUserChannel({ users }: CreateUserChannelDto) {
-    if (users[0].userId === users[1].userId) {
-      throw new BadRequestException(
-        'Cannot create channel for the same person',
-      );
+    if (users.length !== new Set(users).size) {
+      throw new BadRequestException('contains duplicates');
     }
 
-    const existingChannel = await this.channelModel.find({ users });
+    const existingChannel = await this.channelModel.find({ userIds: users });
 
     if (existingChannel && existingChannel.length > 0) {
       throw new BadRequestException(
@@ -71,23 +81,25 @@ export class ChannelsService {
     const channel = new this.channelModel({
       type: EChannelType.PRIVATE,
       serverId: null,
-      users,
+      userIds: users,
       lastMessageDate: new Date().toISOString(),
     });
+    const result = await channel.save();
+    const populated = await result.populate('users');
 
-    return channel.save();
+    this.amqpConnection.publish('default', RoutingKey.CREATE, populated);
+
+    return populated;
   }
 
-  async createServerChannel(
-    serverId: string,
-    { name, type, parentId }: CreateServerChannelDto,
-  ) {
+  async createServerChannel({
+    name,
+    type,
+    parentId,
+    serverId,
+  }: CreateServerChannelDto) {
     if (parentId) {
       const parent = await this.getChannelById(parentId);
-
-      if (!parent) {
-        throw new BadRequestException('Invalid parent id');
-      }
 
       if (parent.type !== EChannelType.PARENT) {
         throw new BadRequestException('Invalid parent');
@@ -101,8 +113,11 @@ export class ChannelsService {
       lastMessageDate: null,
       parentId: parentId ? parentId : null,
     });
+    const result = await channel.save();
 
-    return channel.save();
+    this.amqpConnection.publish('default', RoutingKey.CREATE, result);
+
+    return result;
   }
 
   async getUserChannelRTCToken(userId: string, channelId: string) {
@@ -112,9 +127,7 @@ export class ChannelsService {
       throw new BadRequestException('invalid channel type');
     }
 
-    const desiredChannelUser = channel.users.find(
-      (user) => userId === user.userId,
-    );
+    const desiredChannelUser = channel.userIds.find((id) => userId === id);
 
     if (!desiredChannelUser) {
       throw new ForbiddenException();

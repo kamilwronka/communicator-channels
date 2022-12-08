@@ -1,38 +1,61 @@
-import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Post,
+  Query,
+  UseInterceptors,
+} from '@nestjs/common';
 import { UserId } from 'src/decorators/userId.decorator';
+import { CustomSerializerInterceptor } from '../interceptors/custom-serializer.interceptor';
 import { ChannelsService } from './channels.service';
 import {
   CreateServerChannelDto,
-  CreateServerChannelParamsDto,
   CreateUserChannelDto,
 } from './dto/create-channel.dto';
-import { GetServerChannelsParamsDto } from './dto/get-channels.dto';
+import {
+  GetServerChannelsDto,
+  GetUserChannelsDto,
+} from './dto/get-channels.dto';
 import {
   GetServerChannelRTCTokenParamsDto,
   GetServerChannelRTCTokenQueryDto,
   GetUserChannelRTCTokenParamsDto,
 } from './dto/get-rtc-token.dto';
+import { Channel } from './schemas/channel.schema';
 
 @Controller('')
 export class ChannelsController {
   constructor(private channelsService: ChannelsService) {}
-  @Get('')
-  async getUserChannels(@UserId() userId: string) {
-    return this.channelsService.getUserChannels(userId);
+
+  @UseInterceptors(CustomSerializerInterceptor(Channel))
+  @Get('internal/private/:userId')
+  async getUserChannels(
+    @Param() params: GetUserChannelsDto,
+  ): Promise<Channel[]> {
+    return this.channelsService.getUserChannels(params);
   }
 
-  @Post('')
+  @UseInterceptors(CustomSerializerInterceptor(Channel))
+  @Get('internal/servers/:serverId')
+  async getServerChannels(
+    @Param() params: GetServerChannelsDto,
+  ): Promise<Channel[]> {
+    return this.channelsService.getServerChannels(params);
+  }
+
+  @UseInterceptors(CustomSerializerInterceptor(Channel))
+  @Post('internal/private')
   async createUserChannel(@Body() createChannelData: CreateUserChannelDto) {
     return this.channelsService.createUserChannel(createChannelData);
   }
 
-  //   @Patch(':channelId')
-  //   async updateLastMessageDate(
-  //     @Param() params: UpdateLastMessageDateParamsDto,
-  //     @Body() data: UpdateLastMessageDateDto,
-  //   ) {
-  //     return this.channelsService.updateLastMessageDate(params.channelId, data);
-  //   }
+  @UseInterceptors(CustomSerializerInterceptor(Channel))
+  @Post('internal/servers')
+  async createServerChannel(@Body() createChannelData: CreateServerChannelDto) {
+    return this.channelsService.createServerChannel(createChannelData);
+  }
 
   @Get(':channelId/rtc-token')
   async getUserChannelRTCToken(
@@ -42,22 +65,6 @@ export class ChannelsController {
     return this.channelsService.getUserChannelRTCToken(
       userId,
       params.channelId,
-    );
-  }
-
-  @Get('servers/:serverId')
-  async getServerChannels(@Param() params: GetServerChannelsParamsDto) {
-    return this.channelsService.getServerChannels(params.serverId);
-  }
-
-  @Post('servers/:serverId')
-  async createServerChannel(
-    @Param() params: CreateServerChannelParamsDto,
-    @Body() createChannelData: CreateServerChannelDto,
-  ) {
-    return this.channelsService.createServerChannel(
-      params.serverId,
-      createChannelData,
     );
   }
 

@@ -1,4 +1,3 @@
-import { Type } from 'class-transformer';
 import {
   ArrayMaxSize,
   ArrayMinSize,
@@ -8,34 +7,22 @@ import {
   IsNotEmpty,
   IsOptional,
   IsString,
-  ValidateNested,
 } from 'class-validator';
 import { EChannelType } from '../enums/channel-type.enum';
-
-export class User {
-  @IsNotEmpty()
-  @IsString()
-  userId: string;
-
-  @IsNotEmpty()
-  @IsString()
-  username: string;
-
-  @IsOptional()
-  @IsString()
-  profilePictureUrl?: string;
-}
 
 export class CreateUserChannelDto {
   @IsArray()
   @ArrayMinSize(2)
-  @ArrayMaxSize(2)
-  @ValidateNested({ each: true })
-  @Type(() => User)
-  users: User[];
+  @ArrayMaxSize(20)
+  @IsString({ each: true })
+  users: string[];
 }
 
 export class CreateServerChannelDto {
+  @IsNotEmpty()
+  @IsMongoId()
+  serverId: string;
+
   @IsNotEmpty()
   @IsString()
   name: string;

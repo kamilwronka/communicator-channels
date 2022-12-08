@@ -1,7 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Transform, Type } from 'class-transformer';
+import { Exclude, Type } from 'class-transformer';
 import { Document } from 'mongoose';
-import { User } from '../dto/create-channel.dto';
+import { User } from '../../users/schemas/user.schema';
 
 import { EChannelType } from '../enums/channel-type.enum';
 import {
@@ -11,14 +11,13 @@ import {
 
 export type ChannelDocument = Channel & Document;
 
-@Schema({ timestamps: true })
+@Schema({ timestamps: true, toJSON: { virtuals: true } })
 export class Channel {
-  @Transform(
-    ({ value }) => {
-      return value.toString();
-    },
-    { toPlainOnly: true },
-  )
+  constructor(partial: Partial<Channel>) {
+    Object.assign(this, partial);
+  }
+
+  @Exclude()
   _id?: string;
 
   @Prop({ required: false, default: undefined })
@@ -33,7 +32,11 @@ export class Channel {
   @Prop()
   type: EChannelType;
 
-  @Prop({ type: [], default: undefined })
+  @Exclude()
+  @Prop([{ type: String }])
+  userIds?: string[];
+
+  @Type(() => User)
   users?: User[];
 
   @Type(() => PermissionOverwrite)
@@ -42,6 +45,21 @@ export class Channel {
 
   @Prop()
   lastMessageDate?: string;
+
+  @Exclude()
+  __v: number;
+
+  @Exclude()
+  createdAt: string;
+
+  @Exclude()
+  updatedAt: string;
 }
 
 export const ChannelSchema = SchemaFactory.createForClass(Channel);
+
+ChannelSchema.virtual('users', {
+  ref: User.name,
+  localField: 'userIds',
+  foreignField: 'userId',
+});
