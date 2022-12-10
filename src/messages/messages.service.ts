@@ -10,7 +10,7 @@ import { ConfigService } from '@nestjs/config';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { ChannelsService } from 'src/channels/channels.service';
-import { AWSConfig, ServicesConfig } from 'src/config/types';
+import { AWSConfig } from 'src/config/types';
 import { CreateAttachmentsDto } from './dto/create-attachments.dto';
 import { ManageMessageParamsDto } from './dto/manage-message-params.dto';
 import { SendMessageDto } from './dto/send-message.dto';
@@ -72,9 +72,7 @@ export class MessagesService {
     let attachments: Attachment[] = [];
 
     if (data.attachments) {
-      const { cdn } = this.configService.get<ServicesConfig>('services');
-
-      attachments = createMessageAttachments(data.attachments, cdn);
+      attachments = createMessageAttachments(data.attachments);
     }
 
     const messageData: Partial<Message> = {
@@ -117,9 +115,7 @@ export class MessagesService {
     let attachments: Attachment[] = [];
 
     if (data.attachments) {
-      const { cdn } = this.configService.get<ServicesConfig>('services');
-
-      attachments = createMessageAttachments(data.attachments, cdn);
+      attachments = createMessageAttachments(data.attachments);
     }
 
     Object.entries(data).forEach(([key, value]) => {

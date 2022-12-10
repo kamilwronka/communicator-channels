@@ -52,7 +52,6 @@ import { MessagesModule } from './messages/messages.module';
           )
           .default(RuntimeEnvironment.LOCAL),
         PORT: Joi.number(),
-        CDN_URL: Joi.string(),
         MONGODB_PASSWORD: Joi.string(),
         MONGODB_USER: Joi.string(),
         MONGODB_HOST: Joi.string(),

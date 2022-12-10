@@ -21,7 +21,6 @@ export interface MongoConfig {
 export interface ServicesConfig {
   servers: string;
   users: string;
-  cdn: string;
 }
 
 export interface AWSConfig {
