@@ -18,9 +18,9 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { User, UserDocument } from './schemas/user.schema';
 
 enum RoutingKey {
-  CREATE = 'users.create',
-  UPDATE = 'users.update',
-  DELETE = 'users.delete',
+  CREATE = 'user.create',
+  UPDATE = 'user.update',
+  DELETE = 'user.delete',
 }
 
 @Injectable()
