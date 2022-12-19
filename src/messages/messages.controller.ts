@@ -13,8 +13,8 @@ import {
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
-import { UserId } from 'src/decorators/userId.decorator';
-import { CustomSerializerInterceptor } from 'src/interceptors/custom-serializer.interceptor';
+import { UserId } from 'src/common/decorators/userId.decorator';
+import { CustomSerializerInterceptor } from 'src/common/interceptors/custom-serializer.interceptor';
 import { CreateAttachmentsDto } from './dto/create-attachments.dto';
 import { ManageMessageParamsDto } from './dto/manage-message-params.dto';
 import { SendMessageDto } from './dto/send-message.dto';

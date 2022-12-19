@@ -7,8 +7,8 @@ import {
   Query,
   UseInterceptors,
 } from '@nestjs/common';
-import { UserId } from 'src/decorators/userId.decorator';
-import { CustomSerializerInterceptor } from '../interceptors/custom-serializer.interceptor';
+import { UserId } from 'src/common/decorators/userId.decorator';
+import { CustomSerializerInterceptor } from 'src/common/interceptors/custom-serializer.interceptor';
 import { ChannelsService } from './channels.service';
 import {
   CreateServerChannelDto,

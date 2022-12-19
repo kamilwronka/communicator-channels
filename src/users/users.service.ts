@@ -37,7 +37,7 @@ export class UsersService {
       throw new NotFoundException('user not found');
     }
 
-    return this.userRepository.findById(id);
+    return user;
   }
 
   @RabbitSubscribe({

@@ -10,14 +10,6 @@ export interface AppConfig {
   port: number;
 }
 
-export interface MongoConfig {
-  port: number;
-  host: string;
-  user: string;
-  password: string;
-  database: string;
-}
-
 export interface ServicesConfig {
   servers: string;
   users: string;

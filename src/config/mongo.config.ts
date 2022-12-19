@@ -1,7 +1,7 @@
 import { registerAs } from '@nestjs/config';
-import { MongoConfig } from './types';
+import { MongooseModuleOptions } from '@nestjs/mongoose';
 
-export default registerAs('mongodb', (): MongoConfig => {
+export default registerAs('mongodb', (): MongooseModuleOptions => {
   const {
     MONGODB_HOST,
     MONGODB_PASSWORD,
@@ -11,10 +11,8 @@ export default registerAs('mongodb', (): MongoConfig => {
   } = process.env;
 
   return {
-    host: MONGODB_HOST,
-    port: MONGODB_ACCESS_PORT,
-    password: MONGODB_PASSWORD,
-    user: MONGODB_USER,
-    database: MONGODB_DATABASE,
+    uri: `mongodb://${MONGODB_USER}:${MONGODB_PASSWORD}@${MONGODB_HOST}:${MONGODB_ACCESS_PORT}`,
+    ssl: false,
+    dbName: MONGODB_DATABASE,
   };
 });

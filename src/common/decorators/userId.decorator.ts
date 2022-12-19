@@ -4,8 +4,8 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 
-import { AUTH_NAMESPACE } from 'src/constants/auth-namespace.constant';
-import { decodeJwtPayload } from 'src/helpers/decodeJwtPayload.helper';
+import { AUTH_NAMESPACE } from 'src/common/constants/auth-namespace.constant';
+import { decodeJwtPayload } from 'src/common/helpers/decodeJwtPayload.helper';
 
 export const UserId = createParamDecorator(function (
   data: unknown,
@@ -16,8 +16,13 @@ export const UserId = createParamDecorator(function (
   try {
     const token = request.headers.authorization;
     const parsedPayload = decodeJwtPayload(token);
+    const userId = parsedPayload[AUTH_NAMESPACE];
 
-    return parsedPayload[AUTH_NAMESPACE];
+    if (!userId) {
+      throw new UnauthorizedException();
+    }
+
+    return userId;
   } catch (error) {
     throw new UnauthorizedException();
   }

@@ -2,20 +2,19 @@ import { RabbitMQConfig, RabbitMQModule } from '@golevelup/nestjs-rabbitmq';
 import { Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
-import { User, UserSchema } from './schemas/user.schema';
-import { UsersService } from './users.service';
+import { MembersService } from './members.service';
+import { Member, MemberSchema } from './schemas/member.schema';
 
 @Module({
   imports: [
-    MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),
+    MongooseModule.forFeature([{ name: Member.name, schema: MemberSchema }]),
     RabbitMQModule.forRootAsync(RabbitMQModule, {
       inject: [ConfigService],
       useFactory: async (configService: ConfigService) =>
         configService.get<RabbitMQConfig>('rabbitmq'),
     }),
   ],
-  providers: [UsersService],
-  exports: [UsersService],
-  controllers: [],
+  providers: [MembersService],
+  exports: [MembersService],
 })
-export class UsersModule {}
+export class MembersModule {}
