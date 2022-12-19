@@ -40,6 +40,7 @@ export class MembersService {
   @UsePipes(ValidationPipe)
   async create({ userId, serverId, roles, version }: CreateMemberDto) {
     try {
+      console.log(roles);
       const member = new this.memberRepository({
         userId,
         serverId,

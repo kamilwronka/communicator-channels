@@ -103,7 +103,7 @@ export class RolesService {
         roleId: id,
       });
 
-      if (response.deletedCount >= 0) {
+      if (response.deletedCount > 0) {
         this.logger.log(`Deleted role with id: ${id}`);
       }
     } catch (error) {

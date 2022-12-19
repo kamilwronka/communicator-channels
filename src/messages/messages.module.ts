@@ -8,11 +8,15 @@ import { ConfigService } from '@nestjs/config';
 import { AWSConfig } from 'src/config/types';
 import { ChannelsModule } from 'src/channels/channels.module';
 import { RabbitMQConfig, RabbitMQModule } from '@golevelup/nestjs-rabbitmq';
+import { RolesModule } from '../roles/roles.module';
+import { MembersModule } from '../members/members.module';
 
 @Module({
   imports: [
     MongooseModule.forFeature([{ name: Message.name, schema: MessageSchema }]),
     ChannelsModule,
+    RolesModule,
+    MembersModule,
     RabbitMQModule.forRootAsync(RabbitMQModule, {
       inject: [ConfigService],
       useFactory: async (configService: ConfigService) => {

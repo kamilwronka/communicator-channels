@@ -3,14 +3,18 @@ import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { ChannelsService } from 'src/channels/channels.service';
 import { AWSConfig } from 'src/config/types';
+import { MembersService } from '../members/members.service';
+import { RolesService } from '../roles/roles.service';
 import { CreateAttachmentsDto } from './dto/create-attachments.dto';
 import { ManageMessageParamsDto } from './dto/manage-message-params.dto';
 import { SendMessageDto } from './dto/send-message.dto';
@@ -37,6 +41,8 @@ export class MessagesService {
     private readonly s3Client: S3Client,
     private readonly channelsService: ChannelsService,
     private readonly amqpConnection: AmqpConnection,
+    private readonly rolesService: RolesService,
+    private readonly membersService: MembersService,
   ) {}
 
   async getMessages(
@@ -67,6 +73,21 @@ export class MessagesService {
   }
 
   async sendMessage(userId: string, channelId: string, data: SendMessageDto) {
+    const channel = await this.channelsService.getChannelById(channelId);
+    const members = await this.membersService.getMemberByServer(
+      userId,
+      channel.serverId,
+    );
+    const role = await this.rolesService.getRoleById(members.roles[0]);
+
+    console.log(role);
+
+    if (!role.permissions.includes('send_messages')) {
+      throw new ForbiddenException();
+    }
+
+    // if()
+
     const { mentionEveryone, mentions } = parseMessageContent(data.content);
 
     let attachments: Attachment[] = [];
