@@ -1,15 +1,13 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Exclude } from 'class-transformer';
 import { HydratedDocument } from 'mongoose';
+import { Role } from '../../roles/schemas/role.schema';
 
 export type MemberDocument = HydratedDocument<Member>;
 
-@Schema({ timestamps: true, versionKey: false })
+@Schema({ timestamps: true, versionKey: false, toJSON: { virtuals: true } })
 export class Member {
-  @Exclude()
   _id: string;
 
-  @Exclude()
   @Prop({
     type: String,
     required: true,
@@ -19,7 +17,6 @@ export class Member {
   })
   userId: string;
 
-  @Exclude()
   @Prop({
     type: String,
     required: true,
@@ -30,7 +27,9 @@ export class Member {
   serverId: string;
 
   @Prop([{ type: String }])
-  roles: string[];
+  roleIds: string[];
+
+  roles: Role[];
 
   createdAt: number;
   updatedAt: number;
@@ -45,3 +44,9 @@ MemberSchema.index(
   { userId: 1, serverId: 1 },
   { unique: true, name: 'userId_serverId' },
 );
+
+MemberSchema.virtual('roles', {
+  ref: Role.name,
+  localField: 'roleIds',
+  foreignField: 'roleId',
+});

@@ -17,10 +17,7 @@ import {
   CreateServerChannelDto,
   CreateUserChannelDto,
 } from './dto/create-channel.dto';
-import {
-  GetUserChannelsDto,
-  GetServerChannelsDto,
-} from './dto/get-channels.dto';
+import { GetServerChannelsQueryDto } from './dto/get-channels.dto';
 import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
 
 enum RoutingKey {
@@ -48,7 +45,7 @@ export class ChannelsService {
     return channel;
   }
 
-  async getUserChannels({ userId }: GetUserChannelsDto) {
+  async getUserChannels(userId: string) {
     const channels = await this.channelModel
       .find({
         userIds: userId,
@@ -59,13 +56,17 @@ export class ChannelsService {
     return channels;
   }
 
-  async getServerChannels({ serverId }: GetServerChannelsDto) {
+  async getServerChannels({ serverId }: GetServerChannelsQueryDto) {
     const channels = await this.channelModel.find({ serverId });
 
     return channels;
   }
 
-  async createUserChannel({ users }: CreateUserChannelDto) {
+  async createUserChannel(userId: string, { users }: CreateUserChannelDto) {
+    if (!users.includes(userId)) {
+      throw new ForbiddenException();
+    }
+
     if (users.length !== new Set(users).size) {
       throw new BadRequestException('contains duplicates');
     }

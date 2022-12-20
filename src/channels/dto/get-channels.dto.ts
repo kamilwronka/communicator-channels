@@ -1,6 +1,6 @@
 import { IsMongoId, IsString } from 'class-validator';
 
-export class GetServerChannelsDto {
+export class GetServerChannelsQueryDto {
   @IsMongoId()
   serverId: string;
 }

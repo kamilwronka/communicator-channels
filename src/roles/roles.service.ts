@@ -32,6 +32,12 @@ export class RolesService {
     return role;
   }
 
+  async getMultipleRolesByIds(roleIds: string[]) {
+    const roles = await this.roleRepository.find({ roleId: { $in: roleIds } });
+
+    return roles;
+  }
+
   @RabbitSubscribe({
     exchange: 'default',
     routingKey: RolesRoutingKey.CREATE,

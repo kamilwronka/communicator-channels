@@ -8,6 +8,7 @@ import {
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
+import { Role } from '../roles/schemas/role.schema';
 import { CreateMemberDto } from './dto/create-member.dto';
 import { DeleteMemberDto } from './dto/delete-member.dto';
 import { UpdateMemberDto } from './dto/update-member.dto';
@@ -32,6 +33,23 @@ export class MembersService {
     return member;
   }
 
+  async getMemberPermissions(userId: string, serverId: string) {
+    const member = await this.memberRepository
+      .findOne({ userId, serverId })
+      .populate('roles')
+      .exec();
+
+    if (!member) {
+      return [];
+    }
+
+    const permissions = member.roles.reduce((acc: string[], value: Role) => {
+      return [...acc, ...value.permissions];
+    }, []);
+
+    return [...new Set(permissions)];
+  }
+
   @RabbitSubscribe({
     exchange: 'default',
     routingKey: MembersRoutingKey.CREATE,
@@ -40,7 +58,6 @@ export class MembersService {
   @UsePipes(ValidationPipe)
   async create({ userId, serverId, roles, version }: CreateMemberDto) {
     try {
-      console.log(roles);
       const member = new this.memberRepository({
         userId,
         serverId,

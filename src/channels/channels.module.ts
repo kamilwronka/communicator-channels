@@ -3,6 +3,7 @@ import { Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { UsersModule } from 'src/users/users.module';
+import { MembersModule } from '../members/members.module';
 import { ChannelsController } from './channels.controller';
 import { ChannelsService } from './channels.service';
 import { Channel, ChannelSchema } from './schemas/channel.schema';
@@ -14,11 +15,10 @@ import { Channel, ChannelSchema } from './schemas/channel.schema';
     RabbitMQModule.forRootAsync(RabbitMQModule, {
       inject: [ConfigService],
       useFactory: async (configService: ConfigService) => {
-        const config = configService.get<RabbitMQConfig>('rabbitmq');
-
-        return config;
+        return configService.get<RabbitMQConfig>('rabbitmq');
       },
     }),
+    MembersModule,
   ],
   controllers: [ChannelsController],
   providers: [ChannelsService],

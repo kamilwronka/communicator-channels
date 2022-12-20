@@ -8,26 +8,27 @@ import { ConfigService } from '@nestjs/config';
 import { AWSConfig } from 'src/config/types';
 import { ChannelsModule } from 'src/channels/channels.module';
 import { RabbitMQConfig, RabbitMQModule } from '@golevelup/nestjs-rabbitmq';
-import { RolesModule } from '../roles/roles.module';
 import { MembersModule } from '../members/members.module';
+import { PermissionsGuard } from '../common/guards/permissions/permissions.guard';
 
 @Module({
   imports: [
     MongooseModule.forFeature([{ name: Message.name, schema: MessageSchema }]),
     ChannelsModule,
-    RolesModule,
     MembersModule,
     RabbitMQModule.forRootAsync(RabbitMQModule, {
       inject: [ConfigService],
       useFactory: async (configService: ConfigService) => {
-        const config = configService.get<RabbitMQConfig>('rabbitmq');
-
-        return config;
+        return configService.get<RabbitMQConfig>('rabbitmq');
       },
     }),
   ],
   providers: [
     MessagesService,
+    {
+      provide: 'PERMISSIONS_GUARD',
+      useClass: PermissionsGuard,
+    },
     {
       provide: S3Client,
       inject: [ConfigService],
