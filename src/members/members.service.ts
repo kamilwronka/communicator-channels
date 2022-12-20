@@ -61,7 +61,7 @@ export class MembersService {
       const member = new this.memberRepository({
         userId,
         serverId,
-        roles,
+        roleIds: roles,
         version,
       });
 
@@ -88,8 +88,8 @@ export class MembersService {
         [
           {
             $set: {
-              roles: {
-                $cond: [{ $gt: [version, '$version'] }, roles, '$roles'],
+              roleIds: {
+                $cond: [{ $gt: [version, '$version'] }, roles, '$roleIds'],
               },
             },
           },
