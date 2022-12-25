@@ -1,14 +1,15 @@
-apiVersion: skaffold/v2beta28
+apiVersion: skaffold/v4beta1
 kind: Config
+metadata:
+  name: communicator-channels
 build:
   local:
-    concurrency: 0
+    concurrency: 1
     push: false
   artifacts:
     - image: channels
       docker:
         dockerfile: Dockerfile.dev
-deploy:
-  kubectl:
-    manifests:
-      - "./dev-k8s.yml"
+manifests:
+  rawYaml:
+    - "./dev-k8s.yml"

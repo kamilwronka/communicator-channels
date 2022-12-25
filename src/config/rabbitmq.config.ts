@@ -16,6 +16,14 @@ export default registerAs('rabbitmq', (): RabbitMQConfig => {
         name: 'default',
         type: 'topic',
       },
+      {
+        name: 'x-dead-letter-exchange-ttl',
+        type: 'topic',
+      },
+      {
+        name: 'x-dead-letter-exchange',
+        type: 'topic',
+      },
     ],
     channels: {
       default: {

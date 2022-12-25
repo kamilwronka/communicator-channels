@@ -7,7 +7,6 @@ metadata:
     purpose: dev
     app: channels
 spec:
-  replicas: 1
   selector:
     matchLabels:
       app: channels
@@ -18,17 +17,41 @@ spec:
         app: channels
 
     spec:
-      serviceAccountName: channels
       containers:
         - name: channels
           image: channels
           ports:
             - containerPort: 4000
           env:
-            - name: RABBITMQ_PASS
+            - name: PORT
+              value: "4000"
+            - name: ENV
+              value: local
+            #mongo
+            - name: MONGODB_HOST
+              value: mongo-mongodb
+            - name: MONGODB_ACCESS_PORT
+              value: "27017"
+            - name: MONGODB_USER
+              value: root
+            - name: MONGODB_DATABASE
+              value: channels
+            - name: MONGODB_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: rabbitmq
+                  name: mongo-mongodb
+                  key: mongodb-root-password
+            # rabbitmq
+            - name: RABBITMQ_HOST
+              value: rabbimq-rabbitmq
+            - name: RABBITMQ_ACCESS_PORT
+              value: "5672"
+            - name: RABBITMQ_USER
+              value: user
+            - name: RABBITMQ_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: rabbimq-rabbitmq
                   key: rabbitmq-password
 ---
 apiVersion: v1

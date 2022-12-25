@@ -1,15 +1,10 @@
 import {
+  defaultNackErrorHandler,
   MessageHandlerErrorBehavior,
   Nack,
   RabbitSubscribe,
 } from '@golevelup/nestjs-rabbitmq';
-import {
-  Injectable,
-  Logger,
-  NotFoundException,
-  UsePipes,
-  ValidationPipe,
-} from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -44,18 +39,17 @@ export class UsersService {
     exchange: 'default',
     routingKey: RoutingKey.CREATE,
     queue: 'channels-user-create',
-    errorBehavior: MessageHandlerErrorBehavior.NACK,
   })
-  @UsePipes(ValidationPipe)
-  async create({ id, ...data }: CreateUserDto) {
+  async create({ id, version, ...data }: CreateUserDto) {
     try {
       const user = new this.userRepository({ userId: id, ...data });
 
       await user.save();
-      this.logger.log(`Created user with id: ${id}`);
+      this.logger.log(`Created user with id: ${id} and version of ${version}.`);
     } catch (error) {
       this.logger.error(`Unable to create user: ${JSON.stringify(error)}`);
-      new Nack();
+
+      return new Nack();
     }
   }
 
@@ -63,22 +57,45 @@ export class UsersService {
     exchange: 'default',
     routingKey: RoutingKey.UPDATE,
     queue: 'channels-user-update',
-    errorBehavior: MessageHandlerErrorBehavior.NACK,
+    queueOptions: {
+      deadLetterExchange: 'x-dead-letter-exchange-ttl',
+      deadLetterRoutingKey: RoutingKey.UPDATE,
+    },
+    errorHandler: defaultNackErrorHandler,
   })
-  async update({ id, ...data }: UpdateUserDto) {
-    try {
-      const response = await this.userRepository.findOneAndUpdate(
-        { userId: id },
-        data,
-      );
-
-      if (response) {
-        this.logger.log(`Updated user with id: ${id}`);
-      }
-    } catch (error) {
-      this.logger.error(`Unable to update user: ${JSON.stringify(error)}`);
-      new Nack();
+  async update({ id, version, ...data }: UpdateUserDto, msg) {
+    console.log({ id, version, ...data });
+    if (msg.fields.deliveryTag >= 10) {
+      console.log('retry exceeded');
+      return;
     }
+
+    console.log('handling xxxx', msg);
+
+    throw new Error();
+
+    // return new Nack(false);
+
+    // try {
+    // const user = await this.userRepository.findOne({
+    //   userId: id,
+    //   // version: version - 1,
+    // });
+
+    // console.log(user);
+
+    // if (!user) {
+    //   return new Nack(false);
+    // }
+
+    // user.set({ ...data });
+    // await user.save();
+
+    // this.logger.log(`Updated user with id: ${id} and version of ${version}.`);
+    // } catch (error) {
+    //   this.logger.error(`Unable to update user: ${JSON.stringify(error)}`);
+    //   return new Nack();
+    // }
   }
 
   @RabbitSubscribe({

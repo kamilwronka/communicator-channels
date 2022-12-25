@@ -4,7 +4,13 @@ import { HydratedDocument } from 'mongoose';
 
 export type UserDocument = HydratedDocument<User>;
 
-@Schema({ timestamps: true, toJSON: { virtuals: true }, id: false })
+@Schema({
+  timestamps: true,
+  toJSON: { virtuals: true },
+  versionKey: 'version',
+
+  optimisticConcurrency: true,
+})
 export class User {
   @Exclude()
   _id: string;
@@ -29,7 +35,7 @@ export class User {
   updatedAt: number;
 
   @Exclude()
-  __v: number;
+  version: number;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

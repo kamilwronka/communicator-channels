@@ -43,6 +43,7 @@
     "livekit-server-sdk": "^1.0.3",
     "mime-types": "^2.1.35",
     "mongoose": "^6.7.0",
+    "mongoose-update-if-current": "^1.4.0",
     "nanoid": "^3.3.4",
     "npm": "^9.1.2",
     "reflect-metadata": "^0.1.13",
