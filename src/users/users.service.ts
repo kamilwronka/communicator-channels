@@ -1,28 +1,24 @@
 import {
-  defaultNackErrorHandler,
-  MessageHandlerErrorBehavior,
   Nack,
   RabbitSubscribe,
 } from '@golevelup/nestjs-rabbitmq';
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, UseInterceptors } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { CreateUserDto } from './dto/create-user.dto';
 import { DeleteUserDto } from './dto/delete-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { User, UserDocument } from './schemas/user.schema';
-
-enum RoutingKey {
-  CREATE = 'user.create',
-  UPDATE = 'user.update',
-  DELETE = 'user.delete',
-}
+import { DLQRetryCheckerInterceptor } from 'src/common/interceptors/dlq-retry-checker.interceptor';
+import { DEAD_LETTER_EXCHANGE_NAME, DEFAULT_EXCHANGE_NAME } from 'src/config/rabbitmq.config';
+import { UsersRoutingKey } from './enums/users-routing-key.enum';
+import { UsersQueue } from './enums/users-queue.enum';
 
 @Injectable()
 export class UsersService {
   constructor(
     @InjectModel(User.name) private userRepository: Model<UserDocument>,
-  ) {}
+  ) { }
   private readonly logger = new Logger(UsersService.name);
 
   async getUserById(id: string) {
@@ -36,13 +32,17 @@ export class UsersService {
   }
 
   @RabbitSubscribe({
-    exchange: 'default',
-    routingKey: RoutingKey.CREATE,
-    queue: 'channels-user-create',
+    exchange: DEFAULT_EXCHANGE_NAME,
+    routingKey: UsersRoutingKey.CREATE,
+    queue: UsersQueue.CREATE,
+    queueOptions: {
+      deadLetterExchange: DEAD_LETTER_EXCHANGE_NAME,
+    },
   })
-  async create({ id, version, ...data }: CreateUserDto) {
+  @UseInterceptors(DLQRetryCheckerInterceptor(UsersQueue.CREATE))
+  async create({ id, version, version_hash, avatar, username }: CreateUserDto) {
     try {
-      const user = new this.userRepository({ userId: id, ...data });
+      const user = new this.userRepository({ userId: id, username, avatar, versionHash: version_hash });
 
       await user.save();
       this.logger.log(`Created user with id: ${id} and version of ${version}.`);
@@ -54,56 +54,47 @@ export class UsersService {
   }
 
   @RabbitSubscribe({
-    exchange: 'default',
-    routingKey: RoutingKey.UPDATE,
-    queue: 'channels-user-update',
+    exchange: DEFAULT_EXCHANGE_NAME,
+    routingKey: UsersRoutingKey.UPDATE,
+    queue: UsersQueue.UPDATE,
     queueOptions: {
-      deadLetterExchange: 'x-dead-letter-exchange-ttl',
-      deadLetterRoutingKey: RoutingKey.UPDATE,
+      deadLetterExchange: DEAD_LETTER_EXCHANGE_NAME,
     },
-    errorHandler: defaultNackErrorHandler,
   })
-  async update({ id, version, ...data }: UpdateUserDto, msg) {
-    console.log({ id, version, ...data });
-    if (msg.fields.deliveryTag >= 10) {
-      console.log('retry exceeded');
-      return;
+  @UseInterceptors(DLQRetryCheckerInterceptor(UsersQueue.UPDATE))
+  async update({ id, version, avatar, version_hash, username }: UpdateUserDto) {
+    try {
+      const user = await this.userRepository.findOne({
+        userId: id,
+        version: version - 2, // because users service starts with the version of 1
+      });
+
+      if (!user) {
+        return new Nack();
+      }
+
+      user.avatar = avatar;
+      user.username = username;
+      user.versionHash = version_hash;
+
+      await user.save();
+
+      this.logger.log(`Updated user with id: ${id} and version of ${version}.`);
+    } catch (error) {
+      this.logger.error(`Unable to update user: ${JSON.stringify(error)}`);
+      return new Nack();
     }
-
-    console.log('handling xxxx', msg);
-
-    throw new Error();
-
-    // return new Nack(false);
-
-    // try {
-    // const user = await this.userRepository.findOne({
-    //   userId: id,
-    //   // version: version - 1,
-    // });
-
-    // console.log(user);
-
-    // if (!user) {
-    //   return new Nack(false);
-    // }
-
-    // user.set({ ...data });
-    // await user.save();
-
-    // this.logger.log(`Updated user with id: ${id} and version of ${version}.`);
-    // } catch (error) {
-    //   this.logger.error(`Unable to update user: ${JSON.stringify(error)}`);
-    //   return new Nack();
-    // }
   }
 
   @RabbitSubscribe({
-    exchange: 'default',
-    routingKey: RoutingKey.DELETE,
-    queue: 'channels-user-delete',
-    errorBehavior: MessageHandlerErrorBehavior.NACK,
+    exchange: DEFAULT_EXCHANGE_NAME,
+    routingKey: UsersRoutingKey.DELETE,
+    queue: UsersQueue.DELETE,
+    queueOptions: {
+      deadLetterExchange: DEAD_LETTER_EXCHANGE_NAME,
+    },
   })
+  @UseInterceptors(DLQRetryCheckerInterceptor(UsersQueue.DELETE))
   async delete({ id }: DeleteUserDto) {
     try {
       const response = await this.userRepository.findOneAndDelete({

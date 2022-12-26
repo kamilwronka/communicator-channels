@@ -15,4 +15,7 @@ export class CreateUserDto {
 
   @IsNumber()
   version: number;
+
+  @IsString()
+  version_hash: string;
 }

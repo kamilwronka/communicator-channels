@@ -1,0 +1,1 @@
+export const DLQ_DEFAULT_RETRIES_COUNT = 5;

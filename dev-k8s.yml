@@ -1,7 +1,6 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  namespace: dev
   name: channels
   labels:
     purpose: dev
@@ -43,7 +42,7 @@ spec:
                   key: mongodb-root-password
             # rabbitmq
             - name: RABBITMQ_HOST
-              value: rabbimq-rabbitmq
+              value: rabbitmq
             - name: RABBITMQ_ACCESS_PORT
               value: "5672"
             - name: RABBITMQ_USER
@@ -51,13 +50,12 @@ spec:
             - name: RABBITMQ_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: rabbimq-rabbitmq
+                  name: rabbitmq
                   key: rabbitmq-password
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  namespace: dev
   name: channels
   labels:
     app: channels
@@ -78,7 +76,6 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: channels-ingress
-  namespace: dev
   annotations:
     konghq.com/strip-path: "true"
     konghq.com/preserve-host: "false"

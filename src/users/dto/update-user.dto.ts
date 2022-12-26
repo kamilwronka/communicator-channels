@@ -15,4 +15,7 @@ export class UpdateUserDto {
 
   @IsNumber()
   version: number;
+
+  @IsString()
+  version_hash: string;
 }

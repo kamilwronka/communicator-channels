@@ -36,6 +36,10 @@ export class User {
 
   @Exclude()
   version: number;
+
+  @Exclude()
+  @Prop({ type: String, required: true, trim: true, unique: true })
+  versionHash: string;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);
