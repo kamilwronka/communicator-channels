@@ -12,4 +12,7 @@ export class UpdateRoleDto {
   @IsNotEmpty()
   @IsNumber()
   version: number;
+
+  @IsString()
+  versionHash: string;
 }

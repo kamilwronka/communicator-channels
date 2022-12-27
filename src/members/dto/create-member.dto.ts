@@ -16,4 +16,7 @@ export class CreateMemberDto {
   @IsNotEmpty()
   @IsNumber()
   version: number;
+
+  @IsString()
+  versionHash: string;
 }

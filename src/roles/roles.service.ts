@@ -3,11 +3,15 @@ import {
   Injectable,
   Logger,
   NotFoundException,
-  UsePipes,
-  ValidationPipe,
+  UseInterceptors,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
+import { DLQRetryCheckerInterceptor } from '../common/interceptors/dlq-retry-checker.interceptor';
+import {
+  DEAD_LETTER_EXCHANGE_NAME,
+  DEFAULT_EXCHANGE_NAME,
+} from '../config/rabbitmq.config';
 import { CreateRoleDto } from './dto/create-role.dto';
 import { DeleteRoleDto } from './dto/delete-role.dto';
 import { UpdateRoleDto } from './dto/update-role.dto';
@@ -39,17 +43,21 @@ export class RolesService {
   }
 
   @RabbitSubscribe({
-    exchange: 'default',
+    exchange: DEFAULT_EXCHANGE_NAME,
     routingKey: RolesRoutingKey.CREATE,
     queue: RolesQueue.CREATE,
+    queueOptions: {
+      deadLetterExchange: DEAD_LETTER_EXCHANGE_NAME,
+    },
   })
-  @UsePipes(ValidationPipe)
-  async create({ id, permissions, version }: CreateRoleDto) {
+  @UseInterceptors(DLQRetryCheckerInterceptor(RolesQueue.CREATE))
+  async create({ id, permissions, version, versionHash }: CreateRoleDto) {
     try {
       const role = new this.roleRepository({
         permissions,
         version,
         roleId: id,
+        versionHash,
       });
 
       await role.save();
@@ -61,37 +69,31 @@ export class RolesService {
   }
 
   @RabbitSubscribe({
-    exchange: 'default',
+    exchange: DEFAULT_EXCHANGE_NAME,
     routingKey: RolesRoutingKey.UPDATE,
     queue: RolesQueue.UPDATE,
+    queueOptions: {
+      deadLetterExchange: DEAD_LETTER_EXCHANGE_NAME,
+    },
   })
-  @UsePipes(ValidationPipe)
-  async update({ id, version, permissions }: UpdateRoleDto) {
+  @UseInterceptors(DLQRetryCheckerInterceptor(RolesQueue.UPDATE))
+  async update({ id, version, permissions, versionHash }: UpdateRoleDto) {
     try {
-      const response = await this.roleRepository.updateOne({ roleId: id }, [
-        {
-          $set: {
-            permissions: {
-              $cond: [
-                { $gt: [version, '$version'] },
-                permissions,
-                '$permissions',
-              ],
-            },
-          },
-        },
-        {
-          $set: {
-            version: {
-              $cond: [{ $gt: [version, '$version'] }, version, '$version'],
-            },
-          },
-        },
-      ]);
+      const role = await this.roleRepository.findOne({
+        roleId: id,
+        version: version - 1,
+      });
 
-      if (response.modifiedCount >= 0) {
-        this.logger.log(`Updated role with id: ${id}`);
+      if (!role) {
+        return new Nack();
       }
+
+      role.permissions = permissions;
+      role.versionHash = versionHash;
+
+      await role.save();
+
+      this.logger.log(`Updated role with id: ${id}`);
     } catch (error) {
       this.logger.error(`Unable to update role: ${JSON.stringify(error)}`);
       return new Nack();
@@ -99,22 +101,22 @@ export class RolesService {
   }
 
   @RabbitSubscribe({
-    exchange: 'default',
+    exchange: DEFAULT_EXCHANGE_NAME,
     routingKey: RolesRoutingKey.DELETE,
     queue: RolesQueue.DELETE,
+    queueOptions: {
+      deadLetterExchange: DEAD_LETTER_EXCHANGE_NAME,
+    },
   })
+  @UseInterceptors(DLQRetryCheckerInterceptor(RolesQueue.DELETE))
   async delete({ id }: DeleteRoleDto) {
     try {
-      const response = await this.roleRepository.deleteOne({
-        roleId: id,
-      });
+      await this.roleRepository.findOneAndDelete({ roleId: id });
 
-      if (response.deletedCount > 0) {
-        this.logger.log(`Deleted role with id: ${id}`);
-      }
+      this.logger.log(`Deleted role with id: ${id}`);
     } catch (error) {
       this.logger.error(`Unable to delete role: ${JSON.stringify(error)}`);
-      new Nack();
+      return new Nack();
     }
   }
 }

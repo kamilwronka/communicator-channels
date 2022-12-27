@@ -16,4 +16,7 @@ export class UpdateMemberDto {
   @IsNotEmpty()
   @IsNumber()
   version: number;
+
+  @IsString()
+  versionHash: string;
 }

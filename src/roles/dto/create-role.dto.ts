@@ -9,7 +9,9 @@ export class CreateRoleDto {
   @IsString({ each: true })
   permissions?: string[];
 
-  @IsNotEmpty()
   @IsNumber()
   version: number;
+
+  @IsString()
+  versionHash: string;
 }

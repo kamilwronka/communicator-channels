@@ -8,7 +8,6 @@ export type UserDocument = HydratedDocument<User>;
   timestamps: true,
   toJSON: { virtuals: true },
   versionKey: 'version',
-
   optimisticConcurrency: true,
 })
 export class User {

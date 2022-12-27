@@ -3,11 +3,15 @@ import {
   Injectable,
   Logger,
   NotFoundException,
-  UsePipes,
-  ValidationPipe,
+  UseInterceptors,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
+import { DLQRetryCheckerInterceptor } from '../common/interceptors/dlq-retry-checker.interceptor';
+import {
+  DEAD_LETTER_EXCHANGE_NAME,
+  DEFAULT_EXCHANGE_NAME,
+} from '../config/rabbitmq.config';
 import { Role } from '../roles/schemas/role.schema';
 import { CreateMemberDto } from './dto/create-member.dto';
 import { DeleteMemberDto } from './dto/delete-member.dto';
@@ -51,21 +55,25 @@ export class MembersService {
   }
 
   @RabbitSubscribe({
-    exchange: 'default',
+    exchange: DEFAULT_EXCHANGE_NAME,
     routingKey: MembersRoutingKey.CREATE,
     queue: MembersQueue.CREATE,
+    queueOptions: {
+      deadLetterExchange: DEAD_LETTER_EXCHANGE_NAME,
+    },
   })
-  @UsePipes(ValidationPipe)
-  async create({ userId, serverId, roles, version }: CreateMemberDto) {
+  @UseInterceptors(DLQRetryCheckerInterceptor(MembersQueue.CREATE))
+  async create({ userId, serverId, roles, versionHash }: CreateMemberDto) {
     try {
       const member = new this.memberRepository({
         userId,
         serverId,
         roleIds: roles,
-        version,
+        versionHash,
       });
 
       await member.save();
+
       this.logger.log(
         `Created member with id: ${userId} and serverId: ${serverId}`,
       );
@@ -76,38 +84,38 @@ export class MembersService {
   }
 
   @RabbitSubscribe({
-    exchange: 'default',
+    exchange: DEFAULT_EXCHANGE_NAME,
     routingKey: MembersRoutingKey.UPDATE,
     queue: MembersQueue.UPDATE,
+    queueOptions: {
+      deadLetterExchange: DEAD_LETTER_EXCHANGE_NAME,
+    },
   })
-  @UsePipes(ValidationPipe)
-  async update({ userId, serverId, roles, version }: UpdateMemberDto) {
+  @UseInterceptors(DLQRetryCheckerInterceptor(MembersQueue.UPDATE))
+  async update({
+    userId,
+    serverId,
+    roles,
+    version,
+    versionHash,
+  }: UpdateMemberDto) {
     try {
-      const response = await this.memberRepository.updateOne(
-        { userId, serverId },
-        [
-          {
-            $set: {
-              roleIds: {
-                $cond: [{ $gt: [version, '$version'] }, roles, '$roleIds'],
-              },
-            },
-          },
-          {
-            $set: {
-              version: {
-                $cond: [{ $gt: [version, '$version'] }, version, '$version'],
-              },
-            },
-          },
-        ],
-      );
+      const member = await this.memberRepository.findOne({
+        serverId,
+        userId,
+        version: version - 1,
+      });
 
-      if (response.modifiedCount >= 0) {
-        this.logger.log(
-          `Updated member with id: ${userId} and serverId: ${serverId}`,
-        );
+      if (!member) {
+        return new Nack();
       }
+
+      member.roleIds = roles;
+      member.versionHash = versionHash;
+
+      this.logger.log(
+        `Updated member with id: ${userId} and serverId: ${serverId}`,
+      );
     } catch (error) {
       this.logger.error(`Unable to update member: ${JSON.stringify(error)}`);
       return new Nack();
@@ -115,25 +123,24 @@ export class MembersService {
   }
 
   @RabbitSubscribe({
-    exchange: 'default',
+    exchange: DEFAULT_EXCHANGE_NAME,
     routingKey: MembersRoutingKey.DELETE,
     queue: MembersQueue.DELETE,
+    queueOptions: {
+      deadLetterExchange: DEAD_LETTER_EXCHANGE_NAME,
+    },
   })
+  @UseInterceptors(DLQRetryCheckerInterceptor(MembersQueue.DELETE))
   async delete({ userId, serverId }: DeleteMemberDto) {
     try {
-      const response = await this.memberRepository.deleteOne({
-        userId,
-        serverId,
-      });
+      await this.memberRepository.findOneAndDelete({ userId, serverId });
 
-      if (response.deletedCount >= 0) {
-        this.logger.log(
-          `Deleted member with id: ${userId} and serverId: ${serverId}`,
-        );
-      }
+      this.logger.log(
+        `Deleted member with id: ${userId} and serverId: ${serverId}`,
+      );
     } catch (error) {
       this.logger.error(`Unable to delete member: ${JSON.stringify(error)}`);
-      new Nack();
+      return new Nack();
     }
   }
 }

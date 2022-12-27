@@ -1,9 +1,15 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { Exclude } from 'class-transformer';
 import { HydratedDocument } from 'mongoose';
 
 export type RoleDocument = HydratedDocument<Role>;
 
-@Schema({ timestamps: true, versionKey: false, toJSON: { virtuals: true } })
+@Schema({
+  timestamps: true,
+  optimisticConcurrency: true,
+  versionKey: 'version',
+  toJSON: { virtuals: true },
+})
 export class Role {
   _id: string;
 
@@ -23,8 +29,12 @@ export class Role {
   createdAt: number;
   updatedAt: number;
 
-  @Prop({ type: Number })
+  @Exclude()
   version: number;
+
+  @Exclude()
+  @Prop({ type: String, required: true, trim: true, unique: true })
+  versionHash: string;
 }
 
 export const RoleSchema = SchemaFactory.createForClass(Role);
