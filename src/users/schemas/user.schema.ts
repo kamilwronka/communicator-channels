@@ -11,7 +11,6 @@ export type UserDocument = HydratedDocument<User>;
   optimisticConcurrency: true,
 })
 export class User {
-  @Exclude()
   id: string;
 
   @Exclude()
