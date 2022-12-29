@@ -47,7 +47,7 @@ export class MessagesService {
 
     const messages = await this.messageModel
       .find(findQuery)
-      .sort({ createdAt: 'desc' })
+      .sort({ _id: -1 })
       .limit(limit)
       .populate([{ path: 'author' }, { path: 'mentions' }])
       .exec();
