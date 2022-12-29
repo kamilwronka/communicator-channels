@@ -12,6 +12,9 @@ export type UserDocument = HydratedDocument<User>;
 })
 export class User {
   @Exclude()
+  id: string;
+
+  @Exclude()
   _id: string;
 
   @Exclude()
