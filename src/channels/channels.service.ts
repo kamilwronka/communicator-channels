@@ -2,6 +2,7 @@ import {
   BadRequestException,
   ForbiddenException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -18,7 +19,19 @@ import {
   CreateUserChannelDto,
 } from './dto/create-channel.dto';
 import { GetServerChannelsQueryDto } from './dto/get-channels.dto';
-import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
+import {
+  AmqpConnection,
+  Nack,
+  RabbitSubscribe,
+} from '@golevelup/nestjs-rabbitmq';
+import {
+  DEAD_LETTER_EXCHANGE_NAME,
+  DEFAULT_EXCHANGE_NAME,
+} from '../config/rabbitmq.config';
+import { ChannelsRoutingKey } from './enums/channels-routing-key.enum';
+import { ChannelsQueue } from './enums/channels-queue.enum';
+import { UpdateRelationshipDto } from './dto/update-relationship.dto';
+import { RelationshipStatus } from './enums/relationship-status.enum';
 
 enum RoutingKey {
   CREATE = 'channel.create',
@@ -34,6 +47,7 @@ export class ChannelsService {
     private readonly usersService: UsersService,
     private readonly amqpConnection: AmqpConnection,
   ) {}
+  private readonly logger = new Logger(ChannelsService.name);
 
   async getChannelById(channelId: string): Promise<ChannelDocument> {
     const channel = await this.channelModel.findById(channelId);
@@ -178,5 +192,28 @@ export class ChannelsService {
     );
 
     return { status: 'ok' };
+  }
+
+  @RabbitSubscribe({
+    exchange: DEFAULT_EXCHANGE_NAME,
+    routingKey: ChannelsRoutingKey.RELATIONSHIP_UPDATE,
+    queue: ChannelsQueue.RELATIONSHIP_UPDATE,
+    queueOptions: {
+      deadLetterExchange: DEAD_LETTER_EXCHANGE_NAME,
+    },
+  })
+  async handleRelationshipCreate(data: UpdateRelationshipDto) {
+    console.log('dindu nuffin', data);
+    if (data.status === RelationshipStatus.ACCEPTED) {
+      try {
+        // tech debt, fix this method
+        await this.createUserChannel(data.creator.id, {
+          users: [data.receiver.id, data.creator.id],
+        });
+      } catch (error) {
+        console.log(error);
+        return new Nack();
+      }
+    }
   }
 }

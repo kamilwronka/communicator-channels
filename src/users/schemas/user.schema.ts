@@ -9,8 +9,11 @@ export type UserDocument = HydratedDocument<User>;
   toJSON: { virtuals: true },
   versionKey: 'version',
   optimisticConcurrency: true,
+  id: false,
 })
 export class User {
+  id: string;
+
   @Exclude()
   _id: string;
 

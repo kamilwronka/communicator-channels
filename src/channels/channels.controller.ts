@@ -30,7 +30,7 @@ import { Channel } from './schemas/channel.schema';
 @UseGuards(AuthGuard)
 @Controller('')
 export class ChannelsController {
-  constructor(private channelsService: ChannelsService) { }
+  constructor(private channelsService: ChannelsService) {}
 
   @UseInterceptors(CustomSerializerInterceptor(Channel))
   @Get('me')
