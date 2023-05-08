@@ -56,6 +56,7 @@ export class MessagesService {
   }
 
   async sendMessage(userId: string, channelId: string, data: SendMessageDto) {
+    const { serverId } = await this.channelsService.getChannelById(channelId);
     const { mentionEveryone, mentions } = parseMessageContent(data.content);
 
     let attachments: Attachment[] = [];
@@ -83,7 +84,10 @@ export class MessagesService {
 
     this.channelsService.updateLastMessageDate(channelId, response.createdAt);
 
-    this.amqpConnection.publish('default', RoutingKey.MESSAGE_SEND, response);
+    this.amqpConnection.publish('default', RoutingKey.MESSAGE_SEND, {
+      ...response.toJSON(),
+      serverId,
+    });
 
     return response;
   }

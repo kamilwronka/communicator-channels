@@ -52,6 +52,7 @@ export class MessagesController {
     @UserId() userId: string,
     @Param('channelId') channelId: string,
   ) {
+    console.log(message);
     return this.messagesService.sendMessage(userId, channelId, message);
   }
 

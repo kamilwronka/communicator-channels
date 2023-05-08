@@ -28,7 +28,7 @@ spec:
               value: local
             #mongo
             - name: MONGODB_HOST
-              value: mongo-mongodb
+              value: mongodb
             - name: MONGODB_ACCESS_PORT
               value: "27017"
             - name: MONGODB_USER
@@ -38,7 +38,7 @@ spec:
             - name: MONGODB_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: mongo-mongodb
+                  name: mongodb
                   key: mongodb-root-password
             # rabbitmq
             - name: RABBITMQ_HOST

@@ -22,12 +22,14 @@ export class PermissionsGuard implements CanActivate {
       return true;
     }
 
+    const request = context.switchToHttp().getRequest();
+
     const {
       userId,
       params: { channelId },
       query: { serverId: serverIdFromQuery },
       body: { serverId: serverIdFromBody },
-    } = context.switchToHttp().getRequest();
+    } = request;
 
     if (serverIdFromQuery) {
       return this.verifyPermissions(

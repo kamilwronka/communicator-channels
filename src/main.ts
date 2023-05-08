@@ -11,6 +11,7 @@ async function bootstrap() {
   const { port } = configService.get<AppConfig>('app');
 
   app.useGlobalPipes(new ValidationPipe({ whitelist: true }));
+  app.enableCors(); // temporary
 
   Logger.log(`Starting application on port ${port}...`, 'App');
   await app.listen(port);
