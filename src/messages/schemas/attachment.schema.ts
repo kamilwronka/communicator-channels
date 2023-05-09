@@ -13,6 +13,9 @@ export class Attachment {
 
   @Prop()
   mimeType: string;
+
+  @Prop()
+  fileSize: number;
 }
 
 export const AttachmentSchema = SchemaFactory.createForClass(Attachment);

@@ -135,6 +135,10 @@ export class ChannelsService {
     return result;
   }
 
+  // async deleteUserChannel() {
+  //   const channel = await this.channelModel.find({ userIds: users });
+  // }
+
   async getUserChannelRTCToken(userId: string, channelId: string) {
     const channel = await this.getChannelById(channelId);
 
@@ -216,4 +220,16 @@ export class ChannelsService {
       }
     }
   }
+
+  // @RabbitSubscribe({
+  //   exchange: DEFAULT_EXCHANGE_NAME,
+  //   routingKey: ChannelsRoutingKey.RELATIONSHIP_DELETE,
+  //   queue: ChannelsQueue.RELATIONSHIP_DELETE,
+  //   queueOptions: {
+  //     deadLetterExchange: DEAD_LETTER_EXCHANGE_NAME,
+  //   },
+  // })
+  // async handleRelationshipDelete(data: UpdateRelationshipDto) {
+  //   await this.dele
+  // }
 }

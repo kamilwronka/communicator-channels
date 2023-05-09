@@ -159,8 +159,9 @@ export class MessagesService {
           Bucket: bucketName,
           Key: key,
           ContentType: mimeType ? mimeType : '',
+          ContentLength: file.fileSize,
         }),
-      ).then((url) => ({ url, key }));
+      ).then((url) => ({ url, key, fileSize: file.fileSize }));
     });
 
     return Promise.all(files);

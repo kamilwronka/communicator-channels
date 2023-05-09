@@ -4,6 +4,7 @@ import {
   ArrayMinSize,
   IsArray,
   IsNotEmpty,
+  IsNumber,
   IsOptional,
   IsString,
   MaxLength,
@@ -20,6 +21,10 @@ export class MessageAttachment {
   @IsNotEmpty()
   @IsString()
   key: string;
+
+  @IsNotEmpty()
+  @IsNumber()
+  fileSize: number;
 }
 
 export class SendMessageDto {

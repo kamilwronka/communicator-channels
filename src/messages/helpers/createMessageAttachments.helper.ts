@@ -14,6 +14,7 @@ export const createMessageAttachments = (
       mappedAttachments.push({
         url: `${attachment.key}`,
         mimeType,
+        fileSize: attachment.fileSize,
       });
     }
   });
