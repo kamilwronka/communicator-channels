@@ -135,9 +135,15 @@ export class ChannelsService {
     return result;
   }
 
-  // async deleteUserChannel() {
-  //   const channel = await this.channelModel.find({ userIds: users });
-  // }
+  async deleteUserChannel({ userIds }) {
+    const channel = await this.channelModel.find({ userIds });
+
+    if (channel.length > 0) {
+      await this.channelModel.deleteOne({ userIds });
+    }
+
+    return;
+  }
 
   async getUserChannelRTCToken(userId: string, channelId: string) {
     const channel = await this.getChannelById(channelId);
@@ -207,7 +213,6 @@ export class ChannelsService {
     },
   })
   async handleRelationshipCreate(data: UpdateRelationshipDto) {
-    console.log('dindu nuffin', data);
     if (data.status === RelationshipStatus.ACCEPTED) {
       try {
         // tech debt, fix this method
@@ -221,15 +226,18 @@ export class ChannelsService {
     }
   }
 
-  // @RabbitSubscribe({
-  //   exchange: DEFAULT_EXCHANGE_NAME,
-  //   routingKey: ChannelsRoutingKey.RELATIONSHIP_DELETE,
-  //   queue: ChannelsQueue.RELATIONSHIP_DELETE,
-  //   queueOptions: {
-  //     deadLetterExchange: DEAD_LETTER_EXCHANGE_NAME,
-  //   },
-  // })
-  // async handleRelationshipDelete(data: UpdateRelationshipDto) {
-  //   await this.dele
-  // }
+  @RabbitSubscribe({
+    exchange: DEFAULT_EXCHANGE_NAME,
+    routingKey: ChannelsRoutingKey.RELATIONSHIP_DELETE,
+    queue: ChannelsQueue.RELATIONSHIP_DELETE,
+    queueOptions: {
+      deadLetterExchange: DEAD_LETTER_EXCHANGE_NAME,
+    },
+  })
+  async handleRelationshipDelete(data: UpdateRelationshipDto) {
+    const userIds = [data.creator.id, data.receiver.id];
+
+    await this.deleteUserChannel({ userIds });
+    console.log('channel has been deleted', userIds);
+  }
 }
